@@ -1,0 +1,113 @@
+[
+  {
+    "id": "alex_drawer_unit",
+    "name": "ALEX Drawer Unit",
+    "productId": "004.735.56",
+    "type": "drawer_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 12.625, "depthInches": 16.875, "heightInches": 2.75 },
+      { "position": 2, "widthInches": 12.625, "depthInches": 16.875, "heightInches": 2.75 },
+      { "position": 3, "widthInches": 12.625, "depthInches": 16.875, "heightInches": 2.75 },
+      { "position": 4, "widthInches": 12.625, "depthInches": 16.875, "heightInches": 2.75 },
+      { "position": 5, "widthInches": 12.625, "depthInches": 16.875, "heightInches": 5.5 }
+    ]
+  },
+  {
+    "id": "kallax_insert_2drawer",
+    "name": "KALLAX Insert with 2 Drawers",
+    "productId": "702.866.45",
+    "type": "drawer_insert",
+    "drawers": [
+      { "position": 1, "widthInches": 13, "depthInches": 13, "heightInches": 5.875 },
+      { "position": 2, "widthInches": 13, "depthInches": 13, "heightInches": 5.875 }
+    ]
+  },
+  {
+    "id": "malm_6drawer",
+    "name": "MALM 6-Drawer Dresser",
+    "productId": "102.145.57",
+    "type": "drawer_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 4.25 },
+      { "position": 2, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 4.25 },
+      { "position": 3, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 },
+      { "position": 4, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 },
+      { "position": 5, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 },
+      { "position": 6, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 }
+    ]
+  },
+  {
+    "id": "skubb_box_set",
+    "name": "SKUBB Box (Set of 6)",
+    "productId": "001.863.90",
+    "type": "box",
+    "dimensions": { "widthInches": 12.25, "depthInches": 13.5, "heightInches": 5.25 }
+  },
+  {
+    "id": "kuggis_box_lid",
+    "name": "KUGGIS Box with Lid",
+    "productId": "102.802.03",
+    "type": "box",
+    "dimensions": { "widthInches": 7, "depthInches": 10.25, "heightInches": 3.25 }
+  },
+  {
+    "id": "tjena_storage_box",
+    "name": "TJENA Storage Box with Lid",
+    "productId": "603.954.28",
+    "type": "box",
+    "dimensions": { "widthInches": 9.75, "depthInches": 13.75, "heightInches": 7.75 }
+  },
+  {
+    "id": "hemnes_8drawer",
+    "name": "HEMNES 8-Drawer Dresser",
+    "productId": "003.113.04",
+    "type": "drawer_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 15, "depthInches": 14.5, "heightInches": 4.5 },
+      { "position": 2, "widthInches": 15, "depthInches": 14.5, "heightInches": 4.5 },
+      { "position": 3, "widthInches": 15, "depthInches": 14.5, "heightInches": 4.5 },
+      { "position": 4, "widthInches": 15, "depthInches": 14.5, "heightInches": 4.5 },
+      { "position": 5, "widthInches": 15, "depthInches": 14.5, "heightInches": 6 },
+      { "position": 6, "widthInches": 15, "depthInches": 14.5, "heightInches": 6 },
+      { "position": 7, "widthInches": 15, "depthInches": 14.5, "heightInches": 6 },
+      { "position": 8, "widthInches": 15, "depthInches": 14.5, "heightInches": 6 }
+    ]
+  },
+  {
+    "id": "nordli_4drawer",
+    "name": "NORDLI 4-Drawer Dresser",
+    "productId": "092.394.95",
+    "type": "drawer_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 15.375, "depthInches": 16.125, "heightInches": 5 },
+      { "position": 2, "widthInches": 15.375, "depthInches": 16.125, "heightInches": 5 },
+      { "position": 3, "widthInches": 15.375, "depthInches": 16.125, "heightInches": 5 },
+      { "position": 4, "widthInches": 15.375, "depthInches": 16.125, "heightInches": 5 }
+    ]
+  },
+  {
+    "id": "brimnes_4drawer",
+    "name": "BRIMNES 4-Drawer Dresser",
+    "productId": "403.603.65",
+    "type": "drawer_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 15, "depthInches": 16.5, "heightInches": 5.5 },
+      { "position": 2, "widthInches": 15, "depthInches": 16.5, "heightInches": 5.5 },
+      { "position": 3, "widthInches": 15, "depthInches": 16.5, "heightInches": 5.5 },
+      { "position": 4, "widthInches": 15, "depthInches": 16.5, "heightInches": 5.5 }
+    ]
+  },
+  {
+    "id": "kullen_5drawer",
+    "name": "KULLEN 5-Drawer Dresser",
+    "productId": "803.092.45",
+    "type": "drawer_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 13.25, "depthInches": 15.75, "heightInches": 4.75 },
+      { "position": 2, "widthInches": 13.25, "depthInches": 15.75, "heightInches": 4.75 },
+      { "position": 3, "widthInches": 13.25, "depthInches": 15.75, "heightInches": 4.75 },
+      { "position": 4, "widthInches": 13.25, "depthInches": 15.75, "heightInches": 4.75 },
+      { "position": 5, "widthInches": 13.25, "depthInches": 15.75, "heightInches": 4.75 }
+    ]
+  }
+]
