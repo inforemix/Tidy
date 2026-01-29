@@ -1,9 +1,9 @@
 # TidyVibes — Product Requirements Document v2 (MVP)
 
-**Version:** 2.0  
-**Date:** January 27, 2026  
-**Author:** InfoRemix  
-**Status:** Ready for Development
+**Version:** 3.0
+**Date:** January 29, 2026
+**Author:** InfoRemix
+**Status:** Phase 1-4 Complete (MVP) — Phase 5 In Planning
 
 ---
 
@@ -20,6 +20,9 @@ This isn't an inventory app. It's **external spatial memory** for brains that fo
 - AI-powered layout suggestions (trained semantic grouping + algorithmic placement)
 - ADHD-first design (fast capture, visual feedback, minimal friction)
 - IKEA storage integration (known dimensions = accurate layouts)
+- Multi-provider AI (Gemini primary, Grok backup — switchable)
+- Room/Location hierarchy with FigJam-style mind map navigation
+- AI-generated layout imagery via custom LLM + image generation pipeline
 
 ---
 
@@ -478,12 +481,44 @@ App confirms:
 |-------|------------|-----------|
 | **Frontend** | SwiftUI | Native iOS, modern, fast iteration |
 | **Local storage** | SwiftData | Modern Swift-native persistence, less boilerplate |
-| **Object detection** | Apple Vision + GPT-4V fallback | Free on-device + accurate labeling |
-| **Semantic grouping** | Fine-tuned classifier or GPT-4 | Train on item→category mappings |
-| **Layout algorithm** | Custom bin packing | Constraint-based placement |
+| **Vision AI (Primary)** | Google Gemini API | Multimodal vision + text, image generation capable |
+| **Vision AI (Backup)** | xAI Grok API (grok-2-vision) | Fallback provider, switchable via protocol |
+| **Semantic grouping** | Gemini / Grok with caching | LLM-based grouping, provider-agnostic |
+| **Layout image generation** | Custom pipeline: Grok (plan) + Gemini (generate) | LLM plans arrangement, image API renders it |
+| **Layout algorithm** | Custom bin packing | Constraint-based placement (local, no API) |
 | **Voice** | iOS Speech framework | Free, built-in, accurate |
 | **IKEA data** | Static JSON database | Scraped/compiled dimensions |
 | **Visualization** | SwiftUI Canvas | Native, performant |
+
+#### API Provider Strategy
+
+TidyVibes uses a **protocol-based abstraction** (`VisionAPIProtocol`) that allows swapping AI providers without changing any view or business logic code.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    VisionAPIProtocol                         │
+│  ─────────────────────────────────────────────────────────  │
+│  detectItems(in: UIImage) → [DetectedItem]                  │
+│  parseVoiceInput(_ transcript: String) → [DetectedItem]     │
+│  groupItems(_ items: [String]) → [ItemGroup]                │
+│  generateLayoutImage(items:, storage:, plan:) → UIImage     │
+└────────────────┬───────────────────────────┬────────────────┘
+                 │                           │
+    ┌────────────▼────────────┐  ┌───────────▼────────────┐
+    │  GeminiVisionService    │  │  GrokVisionService     │
+    │  (PRIMARY)              │  │  (BACKUP)              │
+    │                         │  │                         │
+    │  • Gemini 2.0 Flash     │  │  • grok-2-vision       │
+    │  • Image generation     │  │  • Text-only fallback  │
+    │  • Multi-turn context   │  │  • Fast inference      │
+    └─────────────────────────┘  └─────────────────────────┘
+```
+
+**Provider selection** is controlled via `APIProviderConfig`:
+- Default: Gemini (primary)
+- Automatic fallback: If Gemini fails, retry with Grok
+- Manual override: User can switch in app settings (dev mode)
+- Environment variables: `GEMINI_API_KEY`, `GROK_API_KEY`
 
 ### IKEA Storage Database
 
@@ -536,27 +571,50 @@ MVP includes: ALEX, KALLAX, MALM, HEMNES, NORDLI, KULLEN, BRIMNES drawer units +
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│  CAPTURE                                                    │
+│  CAPTURE (via VisionAPIProtocol)                            │
 │  ───────                                                    │
-│  Photo → Apple Vision (object detection)                    │
-│       → GPT-4 Vision (labeling + bounding boxes)            │
+│  Photo → Gemini 2.0 Flash (vision + bounding boxes)         │
+│       → [fallback: Grok-2-Vision]                           │
 │       → User corrections                                    │
 │       → Final item list with positions                      │
 │                                                             │
-│  VOICE FALLBACK                                             │
-│  ──────────────                                             │
+│  VOICE + MANUAL ENTRY                                       │
+│  ────────────────────                                       │
 │  Speech → iOS Speech Framework (transcription)              │
-│        → GPT-4 (parse to structured item list)              │
+│        → Gemini (parse to structured item list)             │
+│        → [fallback: Grok]                                   │
+│        → User corrections                                   │
+│        → Final item list (no positions)                     │
+│                                                             │
+│  Manual → Comma-separated text input                        │
+│        → Gemini (parse quantities + normalize names)        │
 │        → User corrections                                   │
 │        → Final item list (no positions)                     │
 │                                                             │
 │  LAYOUT SUGGESTION                                          │
 │  ─────────────────                                          │
-│  Items → Semantic Grouping Model                            │
+│  Items → Semantic Grouping (Gemini/Grok)                    │
 │       → Groups + storage dimensions                         │
-│       → Bin Packing Algorithm                               │
+│       → Bin Packing Algorithm (local)                       │
 │       → Style heuristics applied                            │
 │       → Suggested (x, y) positions                          │
+│                                                             │
+│  LAYOUT IMAGE GENERATION (Custom Pipeline)                  │
+│  ─────────────────────────────────────────                  │
+│  Step 1: LLM Planning (Grok)                               │
+│       → Input: item list + storage dimensions               │
+│       → Output: arrangement plan with bounding boxes        │
+│         e.g. "Place scissors top-left (0.1, 0.1, 0.2, 0.1)"│
+│                                                             │
+│  Step 2: Image Generation (Gemini)                          │
+│       → Input: arrangement plan + item descriptions         │
+│       → Output: rendered composite image of organized       │
+│         storage with items placed per the plan              │
+│                                                             │
+│  Step 3: Composite & Present                                │
+│       → Overlay bounding boxes on generated image           │
+│       → Show to user as "what it could look like"           │
+│       → Option to apply the arrangement                     │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -635,20 +693,52 @@ enum OrganizationStyle {
 | Service | Estimated monthly cost |
 |---------|------------------------|
 | Apple Developer Program | $99/year (~$8/mo) |
-| OpenAI API (GPT-4V for detection + grouping) | ~$30-50/mo during dev |
-| **Total** | ~$40-60/mo during development |
+| Google Gemini API (vision + image gen) | ~$20-40/mo during dev |
+| xAI Grok API (backup + layout planning) | ~$10-20/mo during dev |
+| **Total** | ~$40-70/mo during development |
 
 **Cost optimization:**
 - Cache semantic grouping results (items don't change categories)
 - Batch API calls where possible
-- Use Apple Vision for initial detection, GPT-4V only for labeling
+- Gemini 2.0 Flash is significantly cheaper than GPT-4V for vision tasks
 - Layout algorithm is entirely local (no API cost)
+- Grok used only for layout planning text (cheap text-only calls)
+- Auto-fallback means backup provider only used when primary fails
 
 ---
 
 ## Data Model
 
+### Hierarchy: Room → Location → StorageSpace → Items
+
 ```
+┌─────────────────────┐
+│        Room         │
+├─────────────────────┤
+│ id: UUID            │
+│ name: String        │  e.g. "Bedroom", "Kitchen", "Garage"
+│ icon: String?       │  SF Symbol name
+│ color: String?      │  Hex color for visual grouping
+│ sortOrder: Int      │
+│ isCollapsed: Bool   │  For mind map collapse state
+│ createdAt: Date     │
+│ locations: [Loc]    │  ◄── has many Locations
+└────────┬────────────┘
+         │
+         │ 1:N
+         ▼
+┌─────────────────────┐
+│      Location       │
+├─────────────────────┤
+│ id: UUID            │
+│ name: String        │  e.g. "Closet", "Under desk", "Wall shelf"
+│ sortOrder: Int      │
+│ room: Room          │  ◄── belongs to Room
+│ storageSpaces: [SS] │  ◄── has many StorageSpaces
+└────────┬────────────┘
+         │
+         │ 1:N
+         ▼
 ┌─────────────────────┐       ┌─────────────────────┐
 │    StorageSpace     │       │        Item         │
 ├─────────────────────┤       ├─────────────────────┤
@@ -660,9 +750,11 @@ enum OrganizationStyle {
 │ depthInches: Double │◄──────│ positionY: Double   │
 │ heightInches: Double│       │ photo: Data?        │
 │ photo: Data?        │       │ storageSpace: Ref   │
-│ createdAt: Date     │       │ createdAt: Date     │
-│ updatedAt: Date     │       │ lastMoved: Date?    │
-│ items: [Item]       │       └─────────────────────┘
+│ generatedImage: Data│       │ createdAt: Date     │
+│ location: Location  │       │ lastMoved: Date?    │
+│ createdAt: Date     │       └─────────────────────┘
+│ updatedAt: Date     │
+│ items: [Item]       │
 └─────────────────────┘
 
 ┌─────────────────────┐
@@ -675,6 +767,45 @@ enum OrganizationStyle {
 │ dimensions: [Dim]   │
 └─────────────────────┘
 ```
+
+### Home Screen: FigJam-Style Mind Map
+
+The home screen displays rooms as **collapsible sections** in a fluid, mind-map-like hierarchy:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  TidyVibes                                          [+] [🔍]│
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ▼ 🛏️ Bedroom                                              │
+│  │                                                          │
+│  ├── 📍 Closet                                              │
+│  │   ├── [ALEX Drawer Unit]  12 items                       │
+│  │   └── [SKUBB Box]        4 items                         │
+│  │                                                          │
+│  ├── 📍 Nightstand                                          │
+│  │   └── [Top Drawer]       6 items                         │
+│  │                                                          │
+│  └── 📍 Under Bed                                           │
+│      └── [KUGGIS Box]       3 items                         │
+│                                                             │
+│  ▶ 🍳 Kitchen  (3 locations, 24 items)                      │
+│                                                             │
+│  ▶ 🏠 Living Room  (2 locations, 15 items)                  │
+│                                                             │
+│  ▼ 📦 Unsorted                                              │
+│  │   └── [My Drawer]  5 items                               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Interactions:**
+- Tap room header → collapse/expand (like FigJam sections)
+- Long press room/location/storage → drag to reorder or move between groups
+- Swipe storage card → quick actions (edit, delete, move)
+- Tap storage card → navigate to spatial bookmark detail
+- Tap [+] → add Room, Location, or Storage (contextual)
+- "Unsorted" section for storage spaces not yet assigned to a room
 
 ---
 
@@ -789,13 +920,196 @@ enum OrganizationStyle {
 
 ---
 
-## Next Steps
+## Phase 5: API Migration, Room Hierarchy, Item Lists & Layout Image Generation
 
-1. **Review this PRD** — Flag any concerns
-2. **Build IKEA database** — Compile dimensions for top 20 products
-3. **Prototype capture flow** — Test photo → AI → review loop
-4. **Prototype layout algorithm** — Test bin packing with grouping
-5. **Begin Week 1 sprint** — Foundation work
+### Overview
+
+Phase 5 transforms TidyVibes from a flat-list MVP into a hierarchical, multi-provider, visually intelligent organizer. This phase introduces:
+
+1. **API abstraction** — Replace OpenAI with Gemini (primary) + Grok (backup)
+2. **Room/Location hierarchy** — Rooms contain Locations contain StorageSpaces
+3. **Improved item entry** — Voice capture + comma-separated manual entry with results page
+4. **FigJam-style home screen** — Collapsible mind map navigation
+5. **AI layout image generation** — Custom pipeline producing visual layout previews
+
+### 5.1 Multi-Provider API with Gemini + Grok
+
+**Goal:** Decouple all AI calls from a single provider. Gemini becomes primary (vision + image generation), Grok becomes backup (vision + layout planning text).
+
+**What changes:**
+- `GPTService.swift` → deprecated, replaced by `VisionAPIProtocol`
+- New `GeminiVisionService.swift` — primary provider
+- New `GrokVisionService.swift` — backup provider
+- New `APIProviderManager.swift` — handles provider selection + automatic fallback
+- All existing views call through the protocol, no direct API references
+
+**Comparison criteria for ongoing evaluation:**
+
+| Criteria | Gemini | Grok | Notes |
+|----------|--------|------|-------|
+| Vision accuracy | TBD | TBD | Side-by-side item detection tests |
+| Latency (photo) | TBD | TBD | Time from image send to parsed result |
+| Latency (text) | TBD | TBD | Voice/manual parsing speed |
+| Cost per call | TBD | TBD | Track in dev dashboard |
+| Image generation | Yes (native) | No | Gemini-only capability |
+| Bounding box quality | TBD | TBD | Accuracy of item positions |
+
+### 5.2 Room → Location → StorageSpace Hierarchy
+
+**Goal:** Users organize their storage spaces into a meaningful physical hierarchy that mirrors their real home.
+
+**New models:**
+- `Room` — top-level grouping (Bedroom, Kitchen, Garage, etc.)
+- `Location` — mid-level grouping within a room (Closet, Under desk, Pantry shelf)
+- `StorageSpace` gains a `location` relationship
+
+**User flow for creating hierarchy:**
+```
+[+] Add Room → "Bedroom" (pick icon + color)
+    [+] Add Location → "Closet"
+        [+] Add Storage → ALEX Drawer Unit (existing flow)
+```
+
+**Migration:** Existing storage spaces move to an "Unsorted" pseudo-room until the user assigns them.
+
+### 5.3 Item Entry: Voice + Manual Comma-Separated List
+
+**Goal:** Two fast paths to create an item list for any storage space.
+
+**Path A — Voice capture (existing, improved):**
+- Tap microphone → speak items naturally
+- Real-time transcript display
+- AI parses transcript into structured item list
+- Results page shows parsed items with edit/delete/add
+
+**Path B — Manual comma-separated entry (new):**
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│  Enter items (comma-separated):                             │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ scissors, tape x2, pens x5, passport, batteries     │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  [Process Items]                                            │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+AI parses quantities (e.g., "tape x2" → tape, quantity 2), normalizes names, and presents the same review/results page.
+
+**Results page (shared by both paths):**
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│  Items detected (6):                                       │
+│                                                             │
+│  ☑ Scissors ............... qty 1    [Edit] [✕]             │
+│  ☑ Tape .................. qty 2    [Edit] [✕]             │
+│  ☑ Pens .................. qty 5    [Edit] [✕]             │
+│  ☑ Passport .............. qty 1    [Edit] [✕]             │
+│  ☑ Batteries ............. qty 1    [Edit] [✕]             │
+│  ☑ Rubber bands .......... qty 1    [Edit] [✕]             │
+│                                                             │
+│  [+ Add another item]                                       │
+│                                                             │
+│  Saving to: Bedroom > Closet > ALEX Drawer Unit             │
+│  ───────────────────────────────────────────────             │
+│                                                             │
+│  [Save Items]                                               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+The "Saving to" line shows the full hierarchy path, tappable to change destination.
+
+### 5.4 FigJam-Style Collapsible Home Screen
+
+**Goal:** Replace the flat storage list with an interactive, collapsible mind-map-like tree view.
+
+**Key behaviors:**
+- Rooms are top-level collapsible sections with icons and item counts
+- Collapsed rooms show summary: "3 locations, 24 items"
+- Locations are sub-sections within rooms, also collapsible
+- Storage spaces are leaf nodes, tappable to open detail view
+- Long-press drag to reorder rooms, locations, or move storage between locations
+- Smooth expand/collapse animations
+- "Unsorted" section always at the bottom for unassigned storage
+
+### 5.5 AI Layout Image Generation (Custom Pipeline)
+
+**Goal:** When a user enters storage dimensions + items, generate a **visual preview** of what the organized storage could look like.
+
+**The pipeline:**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│  INPUT                                                       │
+│  ─────                                                       │
+│  Items: ["scissors", "tape x2", "pens x5", "passport"]      │
+│  Storage: ALEX Drawer (12.6" × 16.9" × 2.75")              │
+│  Style: By Category                                          │
+│                                                              │
+│  STEP 1: LLM Arrangement Planning (Grok)                    │
+│  ────────────────────────────────────────                    │
+│  Prompt: "Given these items and this drawer size,            │
+│  plan an organized arrangement. Output bounding boxes."      │
+│                                                              │
+│  Output:                                                     │
+│  {                                                           │
+│    "plan": "Group office supplies left, personal right",     │
+│    "placements": [                                           │
+│      {"item": "scissors", "region": "top-left",             │
+│       "bbox": [0.05, 0.05, 0.25, 0.15]},                   │
+│      {"item": "pens x5", "region": "left-center",           │
+│       "bbox": [0.05, 0.25, 0.25, 0.20]},                   │
+│      {"item": "tape x2", "region": "center",                │
+│       "bbox": [0.35, 0.05, 0.30, 0.20]},                   │
+│      {"item": "passport", "region": "top-right",            │
+│       "bbox": [0.70, 0.05, 0.25, 0.15]}                    │
+│    ]                                                         │
+│  }                                                           │
+│                                                              │
+│  STEP 2: Image Generation (Gemini)                          │
+│  ─────────────────────────────────                           │
+│  Prompt: "Generate a top-down photo of an organized          │
+│  drawer (12.6×16.9 inches) containing: scissors top-left,   │
+│  5 pens left-center, 2 rolls of tape center, passport       │
+│  top-right. Clean, well-lit, realistic."                    │
+│                                                              │
+│  Output: Generated image (stored as generatedImage on        │
+│  StorageSpace)                                               │
+│                                                              │
+│  STEP 3: Composite & Present                                │
+│  ─────────────────────────────                               │
+│  Overlay labeled bounding boxes on the generated image       │
+│  Show side-by-side: current state vs. generated preview      │
+│  User can tap "Apply this arrangement" to update positions   │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**User-facing flow:**
+1. User opens a storage space → taps "Visualize organized layout"
+2. Loading state: "Planning arrangement..." → "Generating preview..."
+3. Result: Beautiful generated image of their storage, organized
+4. Options: "Apply layout", "Try different style", "Regenerate"
+
+---
+
+## Next Steps (Phase 5 Implementation)
+
+1. **Create `VisionAPIProtocol`** and `GeminiVisionService` — swap out OpenAI
+2. **Create `GrokVisionService`** as backup provider
+3. **Add `Room` and `Location` SwiftData models** with relationships
+4. **Build collapsible mind-map home screen** with Room/Location/Storage tree
+5. **Add comma-separated manual item entry** with shared results page
+6. **Improve voice capture flow** with same results page
+7. **Build layout image generation pipeline** (Grok planning + Gemini generation)
+8. **Migrate existing data** — assign existing storage spaces to "Unsorted" room
+9. **Test and iterate** — compare Gemini vs Grok detection quality
 
 ---
 

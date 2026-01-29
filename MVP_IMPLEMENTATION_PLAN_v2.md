@@ -1,8 +1,8 @@
 # TidyVibes — MVP Implementation Plan v2
 
-**Based on:** TidyVibes_PRD_v2.md  
-**Date:** January 27, 2026  
-**Timeline:** 6-8 weeks  
+**Based on:** TidyVibes_PRD_v2.md (v3.0)
+**Date:** January 29, 2026
+**Timeline:** Phase 1-4 Complete (MVP) | Phase 5 In Progress
 **Approach:** Incremental vertical slices — each phase delivers a usable feature end-to-end
 
 ---
@@ -12,13 +12,25 @@
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Visualization | **2D top-down** | Simple, clear, performant. Isometric adds complexity without value |
-| Object detection | **Apple Vision + GPT-4V** | Free on-device detection, GPT-4V for accurate labeling |
-| Semantic grouping | **GPT-4 with caching → fine-tune later** | Ship fast, optimize later |
+| Object detection | **Gemini 2.0 Flash (primary) + Grok-2-Vision (backup)** | Protocol-based, switchable providers |
+| Semantic grouping | **Gemini/Grok with caching** | LLM-based grouping, provider-agnostic |
 | Layout algorithm | **Custom bin packing + heuristics** | Full control, no API latency |
+| Layout image gen | **Custom pipeline: Grok (plan) + Gemini (image)** | LLM plans → image API renders |
 | Dimensions | **IKEA database + optional manual** | Known dimensions = accurate layouts |
-| Voice capture | **iOS Speech + GPT-4 parsing** | Built-in transcription, LLM for structure |
+| Voice capture | **iOS Speech + Gemini parsing** | Built-in transcription, LLM for structure |
+| Manual entry | **Comma-separated text + Gemini parsing** | Fast bulk entry, AI normalizes |
+| Data hierarchy | **Room → Location → StorageSpace → Items** | Mirrors physical home layout |
+| Home screen | **FigJam-style collapsible mind map** | Fluid hierarchy navigation |
 | State management | **SwiftData** | Modern Swift-native, less boilerplate |
 | Architecture | **MVVM** | Standard SwiftUI pattern, testable |
+
+### API Provider Strategy
+
+| Provider | Role | API Key Env Var | Capabilities |
+|----------|------|-----------------|--------------|
+| **Google Gemini** | Primary | `GEMINI_API_KEY` | Vision, text, image generation |
+| **xAI Grok** | Backup + Layout Planning | `GROK_API_KEY` | Vision, text (no image gen) |
+| ~~OpenAI~~ | ~~Deprecated (Phase 1-4)~~ | ~~`OPENAI_API_KEY`~~ | ~~Legacy, to be removed~~ |
 
 ---
 
@@ -28,26 +40,33 @@
 TidyVibes/
 ├── TidyVibesApp.swift                 # App entry point + SwiftData container
 ├── Models/
-│   ├── StorageSpace.swift             # SwiftData model for storage
+│   ├── Room.swift                     # [NEW] SwiftData model for rooms
+│   ├── Location.swift                 # [NEW] SwiftData model for locations
+│   ├── StorageSpace.swift             # SwiftData model for storage (+ location ref)
 │   ├── Item.swift                     # SwiftData model for items
 │   ├── IKEAProduct.swift              # Codable model for IKEA data
-│   └── Enums.swift                    # StorageType, OrganizationStyle, etc.
+│   └── Enums.swift                    # StorageType, OrganizationStyle, APIProvider
 ├── ViewModels/
 │   ├── CaptureViewModel.swift         # Camera + AI detection orchestration
 │   ├── VoiceCaptureViewModel.swift    # Voice input → item list parsing
 │   ├── StorageViewModel.swift         # Storage CRUD, item management
 │   ├── SearchViewModel.swift          # Search logic, fuzzy matching
 │   ├── LayoutViewModel.swift          # AI grouping + layout algorithm
+│   ├── RoomViewModel.swift            # [NEW] Room/Location CRUD
 │   └── IKEAViewModel.swift            # IKEA product search/selection
 ├── Views/
 │   ├── Home/
-│   │   ├── HomeView.swift             # Main screen: list of storage spaces
-│   │   └── EmptyStateView.swift       # First-run empty state
+│   │   ├── HomeView.swift             # [REVISED] FigJam-style mind map
+│   │   ├── RoomSectionView.swift      # [NEW] Collapsible room section
+│   │   ├── LocationSectionView.swift  # [NEW] Collapsible location subsection
+│   │   ├── EmptyStateView.swift       # First-run empty state
+│   │   └── OnboardingView.swift       # Onboarding flow
 │   ├── Capture/
 │   │   ├── CaptureFlowView.swift      # Container for capture flow
 │   │   ├── CameraView.swift           # Photo capture (UIKit bridge)
 │   │   ├── VoiceCaptureView.swift     # Voice input alternative
-│   │   ├── ItemReviewView.swift       # Review/edit detected items
+│   │   ├── ManualEntryView.swift      # [NEW] Comma-separated text entry
+│   │   ├── ItemReviewView.swift       # [REVISED] Shared results page
 │   │   └── StorageSelectionView.swift # IKEA picker + custom dimensions
 │   ├── SpatialBookmark/
 │   │   ├── SpatialBookmarkView.swift  # 2D top-down visualization
@@ -55,18 +74,25 @@ TidyVibes/
 │   │   └── StorageDetailView.swift    # Full storage view + actions
 │   ├── Layout/
 │   │   ├── LayoutSuggestionView.swift # Before/after comparison
+│   │   ├── LayoutImageView.swift      # [NEW] AI-generated layout preview
 │   │   └── StylePickerView.swift      # Organization style selection
 │   ├── Search/
-│   │   ├── SearchView.swift           # Search bar + results
-│   │   └── SearchResultView.swift     # Highlighted item in context
+│   │   └── SearchView.swift           # Search bar + results
+│   ├── Hierarchy/
+│   │   ├── AddRoomView.swift          # [NEW] Create room (name, icon, color)
+│   │   ├── AddLocationView.swift      # [NEW] Create location within room
+│   │   └── MoveStorageView.swift      # [NEW] Move storage between locations
 │   └── Shared/
 │       ├── ItemRowView.swift          # Reusable item list row
 │       ├── StorageCardView.swift      # Storage space card for home
 │       └── LoadingOverlay.swift       # AI processing indicator
 ├── Services/
-│   ├── VisionService.swift            # Apple Vision object detection
-│   ├── GPTService.swift               # OpenAI API integration
-│   ├── SemanticGroupingService.swift  # Item → category grouping
+│   ├── VisionAPIProtocol.swift        # [NEW] Provider-agnostic API protocol
+│   ├── GeminiVisionService.swift      # [NEW] Google Gemini API (primary)
+│   ├── GrokVisionService.swift        # [NEW] xAI Grok API (backup)
+│   ├── APIProviderManager.swift       # [NEW] Provider selection + fallback
+│   ├── LayoutImagePipeline.swift      # [NEW] Grok plan + Gemini image gen
+│   ├── GPTService.swift               # [DEPRECATED] OpenAI (Phase 1-4 legacy)
 │   ├── LayoutEngine.swift             # Bin packing + style heuristics
 │   ├── SpeechService.swift            # iOS Speech transcription
 │   ├── SearchService.swift            # Fuzzy text matching
@@ -1688,14 +1714,934 @@ enum AppCornerRadius {
 
 ---
 
+## Phase 5: API Migration, Room Hierarchy, Item Lists & Layout Image Generation
+
+**Goal:** Replace OpenAI with Gemini (primary) + Grok (backup), add Room→Location hierarchy with FigJam-style home screen, improve item entry flows, and build custom AI layout image generation pipeline.
+
+### 5.1 VisionAPIProtocol & Provider Abstraction
+
+**Tasks:**
+- [ ] Create `VisionAPIProtocol.swift`
+- [ ] Create `GeminiVisionService.swift` (primary provider)
+- [ ] Create `GrokVisionService.swift` (backup provider)
+- [ ] Create `APIProviderManager.swift` (selection + auto-fallback)
+- [ ] Migrate all view/service code from `GPTService` → protocol calls
+- [ ] Deprecate `GPTService.swift` (keep for reference, mark deprecated)
+- [ ] Add `APIProvider` enum to `Enums.swift`
+
+```swift
+// MARK: - VisionAPIProtocol.swift
+
+protocol VisionAPIProtocol {
+    /// Detect items from a photo, returning identified items with positions
+    func detectItems(in image: UIImage) async throws -> [DetectedItem]
+
+    /// Parse a voice transcript or text input into structured items
+    func parseItemInput(_ text: String) async throws -> [DetectedItem]
+
+    /// Group items into semantic categories
+    func groupItems(_ items: [String]) async throws -> [ItemGroup]
+}
+
+// Optional: providers that support image generation conform to this too
+protocol ImageGenerationCapable {
+    /// Generate an image from a text prompt
+    func generateImage(prompt: String) async throws -> UIImage
+}
+```
+
+```swift
+// MARK: - GeminiVisionService.swift
+
+class GeminiVisionService: VisionAPIProtocol, ImageGenerationCapable {
+    private let apiKey: String
+    private let baseURL = "https://generativelanguage.googleapis.com/v1beta"
+
+    init() {
+        self.apiKey = ProcessInfo.processInfo.environment["GEMINI_API_KEY"] ?? ""
+    }
+
+    func detectItems(in image: UIImage) async throws -> [DetectedItem] {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            throw VisionAPIError.invalidImage
+        }
+        let base64Image = imageData.base64EncodedString()
+
+        // Gemini API: POST /v1beta/models/gemini-2.0-flash:generateContent
+        let url = URL(string: "\(baseURL)/models/gemini-2.0-flash:generateContent?key=\(apiKey)")!
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "contents": [[
+                "parts": [
+                    ["text": """
+                        Analyze this photo and identify all distinct objects/items visible.
+                        Return a JSON array with this exact structure:
+                        [
+                          {
+                            "name": "item name",
+                            "quantity": 1,
+                            "boundingBox": {"x": 0.1, "y": 0.2, "width": 0.15, "height": 0.1}
+                          }
+                        ]
+                        Coordinates are normalized 0-1 from top-left.
+                        Group identical items. Be specific with names.
+                        Return ONLY the JSON array.
+                        """],
+                    ["inline_data": [
+                        "mime_type": "image/jpeg",
+                        "data": base64Image
+                    ]]
+                ]
+            ]]
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, _) = try await URLSession.shared.data(for: request)
+
+        // Parse Gemini response → extract text → parse JSON → [DetectedItem]
+        return try parseGeminiResponse(data)
+    }
+
+    func parseItemInput(_ text: String) async throws -> [DetectedItem] {
+        // Similar structure: text-only Gemini call to parse items
+        // Handles both voice transcripts and comma-separated manual entry
+        let prompt = """
+        Parse this item list into structured data. The input may be:
+        - A voice transcript: "scissors, two rolls of tape, about five pens"
+        - A comma-separated list: "scissors, tape x2, pens x5"
+
+        Input: "\(text)"
+
+        Return JSON array:
+        [{"name": "item name", "quantity": 1}]
+
+        Extract quantities. Normalize names. Return ONLY the JSON array.
+        """
+
+        // POST to Gemini text endpoint
+        // ... (standard Gemini API call)
+        fatalError("Implementation pending")
+    }
+
+    func groupItems(_ items: [String]) async throws -> [ItemGroup] {
+        // Standard Gemini text call for semantic grouping
+        fatalError("Implementation pending")
+    }
+
+    func generateImage(prompt: String) async throws -> UIImage {
+        // Gemini image generation endpoint
+        // POST /v1beta/models/gemini-2.0-flash:generateContent
+        // with generation_config for image output
+        fatalError("Implementation pending")
+    }
+
+    private func parseGeminiResponse(_ data: Data) throws -> [DetectedItem] {
+        // Gemini response format:
+        // { "candidates": [{ "content": { "parts": [{ "text": "..." }] } }] }
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let candidates = json?["candidates"] as? [[String: Any]],
+              let content = candidates.first?["content"] as? [String: Any],
+              let parts = content["parts"] as? [[String: Any]],
+              let text = parts.first?["text"] as? String else {
+            throw VisionAPIError.invalidResponse
+        }
+
+        // Extract JSON array from text response
+        var jsonString = text
+        if let start = text.range(of: "["),
+           let end = text.range(of: "]", options: .backwards) {
+            jsonString = String(text[start.lowerBound...end.upperBound])
+        }
+
+        let jsonData = jsonString.data(using: .utf8)!
+        return try JSONDecoder().decode([DetectedItem].self, from: jsonData)
+    }
+}
+
+enum VisionAPIError: Error, LocalizedError {
+    case invalidImage
+    case invalidResponse
+    case parsingFailed
+    case providerUnavailable
+    case imageGenerationFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidImage: return "Could not process the image"
+        case .invalidResponse: return "AI returned an unexpected response"
+        case .parsingFailed: return "Could not parse AI response"
+        case .providerUnavailable: return "AI service is currently unavailable"
+        case .imageGenerationFailed: return "Could not generate layout image"
+        }
+    }
+}
+```
+
+```swift
+// MARK: - GrokVisionService.swift
+
+class GrokVisionService: VisionAPIProtocol {
+    private let apiKey: String
+    private let baseURL = "https://api.x.ai/v1/chat/completions"
+
+    init() {
+        self.apiKey = ProcessInfo.processInfo.environment["GROK_API_KEY"] ?? ""
+    }
+
+    func detectItems(in image: UIImage) async throws -> [DetectedItem] {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            throw VisionAPIError.invalidImage
+        }
+        let base64Image = imageData.base64EncodedString()
+
+        var request = URLRequest(url: URL(string: baseURL)!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "model": "grok-2-vision-latest",
+            "messages": [[
+                "role": "user",
+                "content": [
+                    ["type": "text", "text": """
+                        Analyze this photo and identify all distinct objects/items.
+                        Return a JSON array: [{"name": "...", "quantity": 1,
+                        "boundingBox": {"x": 0.1, "y": 0.2, "width": 0.15, "height": 0.1}}]
+                        Coordinates normalized 0-1. Return ONLY JSON.
+                        """],
+                    ["type": "image_url", "image_url": [
+                        "url": "data:image/jpeg;base64,\(base64Image)"
+                    ]]
+                ]
+            ]],
+            "max_tokens": 2000
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, _) = try await URLSession.shared.data(for: request)
+        return try parseGrokResponse(data)
+    }
+
+    func parseItemInput(_ text: String) async throws -> [DetectedItem] {
+        // Standard Grok text call (same prompt as Gemini)
+        fatalError("Implementation pending")
+    }
+
+    func groupItems(_ items: [String]) async throws -> [ItemGroup] {
+        // Standard Grok text call for semantic grouping
+        fatalError("Implementation pending")
+    }
+
+    private func parseGrokResponse(_ data: Data) throws -> [DetectedItem] {
+        // Grok uses OpenAI-compatible response format
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let choices = json?["choices"] as? [[String: Any]],
+              let message = choices.first?["message"] as? [String: Any],
+              let content = message["content"] as? String else {
+            throw VisionAPIError.invalidResponse
+        }
+
+        var jsonString = content
+        if let start = content.range(of: "["),
+           let end = content.range(of: "]", options: .backwards) {
+            jsonString = String(content[start.lowerBound...end.upperBound])
+        }
+
+        let jsonData = jsonString.data(using: .utf8)!
+        return try JSONDecoder().decode([DetectedItem].self, from: jsonData)
+    }
+}
+```
+
+```swift
+// MARK: - APIProviderManager.swift
+
+class APIProviderManager {
+    static let shared = APIProviderManager()
+
+    enum Provider: String, CaseIterable {
+        case gemini = "gemini"
+        case grok = "grok"
+    }
+
+    private let gemini = GeminiVisionService()
+    private let grok = GrokVisionService()
+
+    var primaryProvider: Provider = .gemini
+
+    /// Get the active vision service, with automatic fallback
+    var activeService: VisionAPIProtocol {
+        switch primaryProvider {
+        case .gemini: return gemini
+        case .grok: return grok
+        }
+    }
+
+    var backupService: VisionAPIProtocol {
+        switch primaryProvider {
+        case .gemini: return grok
+        case .grok: return gemini
+        }
+    }
+
+    /// Image generation is only available via Gemini
+    var imageGenerator: ImageGenerationCapable { gemini }
+
+    /// Execute with automatic fallback to backup provider
+    func withFallback<T>(_ operation: (VisionAPIProtocol) async throws -> T) async throws -> T {
+        do {
+            return try await operation(activeService)
+        } catch {
+            print("Primary provider (\(primaryProvider)) failed: \(error). Trying backup...")
+            return try await operation(backupService)
+        }
+    }
+}
+```
+
+### 5.2 Room & Location Data Models
+
+**Tasks:**
+- [ ] Create `Room.swift` SwiftData model
+- [ ] Create `Location.swift` SwiftData model
+- [ ] Update `StorageSpace.swift` with `location` relationship
+- [ ] Update `TidyVibesApp.swift` to include Room and Location in SwiftData container
+- [ ] Create data migration for existing storage spaces → "Unsorted" room
+
+```swift
+// MARK: - Room.swift
+import SwiftData
+
+@Model
+class Room {
+    var id: UUID = UUID()
+    var name: String
+    var icon: String?          // SF Symbol name, e.g. "bed.double", "fork.knife"
+    var color: String?         // Hex color, e.g. "#FF6B6B"
+    var sortOrder: Int = 0
+    var isCollapsed: Bool = false
+    var createdAt: Date = Date()
+
+    @Relationship(deleteRule: .cascade, inverse: \Location.room)
+    var locations: [Location] = []
+
+    init(name: String, icon: String? = nil, color: String? = nil) {
+        self.name = name
+        self.icon = icon
+        self.color = color
+    }
+
+    /// Total item count across all locations and storage spaces
+    var totalItemCount: Int {
+        locations.reduce(0) { total, location in
+            total + location.storageSpaces.reduce(0) { $0 + $1.items.count }
+        }
+    }
+
+    /// Summary text for collapsed view: "3 locations, 24 items"
+    var summary: String {
+        let locCount = locations.count
+        let itemCount = totalItemCount
+        return "\(locCount) location\(locCount == 1 ? "" : "s"), \(itemCount) item\(itemCount == 1 ? "" : "s")"
+    }
+}
+
+// MARK: - Location.swift
+import SwiftData
+
+@Model
+class Location {
+    var id: UUID = UUID()
+    var name: String
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
+
+    var room: Room?
+
+    @Relationship(deleteRule: .cascade, inverse: \StorageSpace.location)
+    var storageSpaces: [StorageSpace] = []
+
+    init(name: String) {
+        self.name = name
+    }
+
+    var totalItemCount: Int {
+        storageSpaces.reduce(0) { $0 + $1.items.count }
+    }
+}
+
+// MARK: - StorageSpace.swift (updated)
+// Add to existing model:
+//   var location: Location?
+//   var generatedImage: Data?  // AI-generated layout preview
+```
+
+### 5.3 FigJam-Style Collapsible Home Screen
+
+**Tasks:**
+- [ ] Rewrite `HomeView.swift` with room-based sections
+- [ ] Create `RoomSectionView.swift` — collapsible room header
+- [ ] Create `LocationSectionView.swift` — collapsible location subsection
+- [ ] Add "Unsorted" pseudo-section for unassigned storage
+- [ ] Implement expand/collapse animations
+- [ ] Add long-press drag to reorder (stretch goal)
+- [ ] Add contextual [+] menu (Add Room / Add Location / Add Storage)
+
+```swift
+// MARK: - HomeView.swift (revised)
+import SwiftUI
+import SwiftData
+
+struct HomeView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Room.sortOrder) private var rooms: [Room]
+    @Query private var allSpaces: [StorageSpace]
+
+    @State private var showingCapture = false
+    @State private var showingSearch = false
+    @State private var showingAddRoom = false
+
+    /// Storage spaces not assigned to any location
+    var unsortedSpaces: [StorageSpace] {
+        allSpaces.filter { $0.location == nil }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if rooms.isEmpty && allSpaces.isEmpty {
+                    EmptyStateView(showingCapture: $showingCapture)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            // Room sections
+                            ForEach(rooms) { room in
+                                RoomSectionView(room: room)
+                            }
+
+                            // Unsorted section
+                            if !unsortedSpaces.isEmpty {
+                                UnsortedSectionView(spaces: unsortedSpaces)
+                            }
+                        }
+                        .padding(.vertical)
+                    }
+                }
+            }
+            .navigationTitle("TidyVibes")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button(action: { showingAddRoom = true }) {
+                            Label("Add Room", systemImage: "house.fill")
+                        }
+                        Button(action: { showingCapture = true }) {
+                            Label("Add Storage", systemImage: "plus.circle.fill")
+                        }
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                    }
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: { showingSearch = true }) {
+                        Image(systemName: "magnifyingglass")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingCapture) { CaptureFlowView() }
+            .sheet(isPresented: $showingSearch) { SearchView() }
+            .sheet(isPresented: $showingAddRoom) { AddRoomView() }
+        }
+    }
+}
+
+// MARK: - RoomSectionView.swift
+struct RoomSectionView: View {
+    @Bindable var room: Room
+    @State private var showingAddLocation = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Room header — tap to collapse/expand
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    room.isCollapsed.toggle()
+                }
+            }) {
+                HStack {
+                    Image(systemName: room.isCollapsed ? "chevron.right" : "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .frame(width: 20)
+
+                    if let icon = room.icon {
+                        Image(systemName: icon)
+                            .foregroundColor(room.colorValue)
+                    }
+
+                    Text(room.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    Spacer()
+
+                    if room.isCollapsed {
+                        Text(room.summary)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Button(action: { showingAddLocation = true }) {
+                        Image(systemName: "plus")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+                .background(Color(.systemBackground))
+            }
+            .buttonStyle(.plain)
+
+            // Expanded content — locations
+            if !room.isCollapsed {
+                ForEach(room.locations.sorted(by: { $0.sortOrder < $1.sortOrder })) { location in
+                    LocationSectionView(location: location)
+                        .padding(.leading, 24)
+                }
+            }
+
+            Divider()
+        }
+        .sheet(isPresented: $showingAddLocation) {
+            AddLocationView(room: room)
+        }
+    }
+}
+
+// MARK: - LocationSectionView.swift
+struct LocationSectionView: View {
+    let location: Location
+    @State private var isExpanded = true
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Location header
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    isExpanded.toggle()
+                }
+            }) {
+                HStack {
+                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .frame(width: 16)
+
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+
+                    Text(location.name)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+
+                    Spacer()
+
+                    Text("\(location.totalItemCount) items")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+
+            // Storage spaces within this location
+            if isExpanded {
+                ForEach(location.storageSpaces) { space in
+                    NavigationLink(destination: StorageDetailView(space: space)) {
+                        StorageCardView(space: space)
+                            .padding(.leading, 24)
+                            .padding(.trailing)
+                            .padding(.vertical, 4)
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+### 5.4 Manual Item Entry (Comma-Separated)
+
+**Tasks:**
+- [ ] Create `ManualEntryView.swift`
+- [ ] Update `CaptureFlowView.swift` to include manual entry as a third capture option
+- [ ] Update `ItemReviewView.swift` as shared results page (voice, manual, photo all converge)
+- [ ] Show full hierarchy path ("Saving to: Bedroom > Closet > ALEX") on results page
+
+```swift
+// MARK: - ManualEntryView.swift
+import SwiftUI
+
+struct ManualEntryView: View {
+    @State private var itemText: String = ""
+    @State private var isProcessing = false
+    let onItemsDetected: ([DetectedItem]) -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Enter your items")
+                .font(.headline)
+
+            Text("Type items separated by commas.\nUse \"x2\" or \"x5\" for quantities.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            TextEditor(text: $itemText)
+                .frame(height: 120)
+                .padding(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                )
+                .overlay(alignment: .topLeading) {
+                    if itemText.isEmpty {
+                        Text("scissors, tape x2, pens x5, passport, batteries...")
+                            .foregroundColor(.gray.opacity(0.5))
+                            .padding(12)
+                            .allowsHitTesting(false)
+                    }
+                }
+
+            Button(action: processItems) {
+                if isProcessing {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                } else {
+                    Text("Process Items")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(itemText.isEmpty ? Color.gray.opacity(0.3) : Color.accentColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+            }
+            .disabled(itemText.isEmpty || isProcessing)
+        }
+        .padding()
+    }
+
+    private func processItems() {
+        isProcessing = true
+        Task {
+            do {
+                let items = try await APIProviderManager.shared
+                    .withFallback { provider in
+                        try await provider.parseItemInput(itemText)
+                    }
+                await MainActor.run {
+                    isProcessing = false
+                    onItemsDetected(items)
+                }
+            } catch {
+                await MainActor.run {
+                    isProcessing = false
+                    // Handle error
+                }
+            }
+        }
+    }
+}
+```
+
+### 5.5 Layout Image Generation Pipeline
+
+**Tasks:**
+- [ ] Create `LayoutImagePipeline.swift`
+- [ ] Create `LayoutImageView.swift` to display generated images
+- [ ] Add "Visualize organized layout" button to `StorageDetailView`
+- [ ] Add `generatedImage` property to `StorageSpace` model
+- [ ] Implement Grok planning step (text prompt → JSON arrangement plan)
+- [ ] Implement Gemini image generation step (plan → rendered image)
+- [ ] Implement composite step (overlay bounding box labels)
+
+```swift
+// MARK: - LayoutImagePipeline.swift
+
+struct ArrangementPlan: Codable {
+    let plan: String
+    let placements: [Placement]
+
+    struct Placement: Codable {
+        let item: String
+        let region: String
+        let bbox: [Double]  // [x, y, width, height] normalized 0-1
+    }
+}
+
+class LayoutImagePipeline {
+    static let shared = LayoutImagePipeline()
+
+    private let planner: VisionAPIProtocol  // Grok for planning
+    private let imageGen: ImageGenerationCapable  // Gemini for image gen
+
+    init() {
+        self.planner = GrokVisionService()
+        self.imageGen = APIProviderManager.shared.imageGenerator
+    }
+
+    /// Full pipeline: plan arrangement → generate image → composite
+    func generateLayoutImage(
+        items: [Item],
+        storage: StorageSpace,
+        style: OrganizationStyle
+    ) async throws -> (image: UIImage, plan: ArrangementPlan) {
+
+        // STEP 1: LLM plans the arrangement (Grok)
+        let plan = try await planArrangement(items: items, storage: storage, style: style)
+
+        // STEP 2: Generate image from plan (Gemini)
+        let prompt = buildImagePrompt(plan: plan, storage: storage)
+        let generatedImage = try await imageGen.generateImage(prompt: prompt)
+
+        // STEP 3: Composite bounding box labels onto image
+        let composited = compositeLabels(image: generatedImage, plan: plan)
+
+        return (image: composited, plan: plan)
+    }
+
+    private func planArrangement(
+        items: [Item],
+        storage: StorageSpace,
+        style: OrganizationStyle
+    ) async throws -> ArrangementPlan {
+        let itemList = items.map { "\($0.name) (qty: \($0.quantity))" }.joined(separator: ", ")
+
+        let prompt = """
+        You are organizing items in a storage space.
+
+        Storage: \(storage.name) (\(storage.widthInches)" × \(storage.depthInches)" × \(storage.heightInches)")
+        Items: \(itemList)
+        Style: \(style.displayName) — \(style.description)
+
+        Plan an organized arrangement. For each item, specify:
+        - Which region it should go in (top-left, center, bottom-right, etc.)
+        - A bounding box [x, y, width, height] in normalized 0-1 coordinates
+
+        Return JSON:
+        {
+          "plan": "Brief description of the arrangement strategy",
+          "placements": [
+            {"item": "item name", "region": "top-left", "bbox": [0.05, 0.05, 0.25, 0.15]}
+          ]
+        }
+
+        Return ONLY the JSON.
+        """
+
+        // Use Grok for planning (text-only, fast)
+        let response = try await callGrokText(prompt: prompt)
+        return try parseArrangementPlan(from: response)
+    }
+
+    private func buildImagePrompt(plan: ArrangementPlan, storage: StorageSpace) -> String {
+        let placementDescriptions = plan.placements.map { p in
+            "\(p.item) placed in the \(p.region)"
+        }.joined(separator: ", ")
+
+        return """
+        Generate a photorealistic top-down view of an organized \(storage.storageType) \
+        (\(storage.widthInches) × \(storage.depthInches) inches). \
+        Contents arranged as follows: \(placementDescriptions). \
+        \(plan.plan). Clean, well-lit, minimalist styling. \
+        Soft shadows, white/cream background.
+        """
+    }
+
+    private func compositeLabels(image: UIImage, plan: ArrangementPlan) -> UIImage {
+        // Overlay labeled bounding boxes on the generated image
+        let renderer = UIGraphicsImageRenderer(size: image.size)
+        return renderer.image { context in
+            image.draw(at: .zero)
+
+            let imageSize = image.size
+
+            for placement in plan.placements {
+                guard placement.bbox.count == 4 else { continue }
+                let rect = CGRect(
+                    x: placement.bbox[0] * imageSize.width,
+                    y: placement.bbox[1] * imageSize.height,
+                    width: placement.bbox[2] * imageSize.width,
+                    height: placement.bbox[3] * imageSize.height
+                )
+
+                // Draw bounding box
+                UIColor.systemTeal.withAlphaComponent(0.3).setFill()
+                UIBezierPath(roundedRect: rect, cornerRadius: 4).fill()
+
+                UIColor.systemTeal.setStroke()
+                let border = UIBezierPath(roundedRect: rect, cornerRadius: 4)
+                border.lineWidth = 2
+                border.stroke()
+
+                // Draw label
+                let label = placement.item
+                let attributes: [NSAttributedString.Key: Any] = [
+                    .font: UIFont.systemFont(ofSize: 12, weight: .medium),
+                    .foregroundColor: UIColor.darkText
+                ]
+                let labelSize = label.size(withAttributes: attributes)
+                let labelPoint = CGPoint(
+                    x: rect.midX - labelSize.width / 2,
+                    y: rect.midY - labelSize.height / 2
+                )
+                label.draw(at: labelPoint, withAttributes: attributes)
+            }
+        }
+    }
+
+    private func callGrokText(prompt: String) async throws -> String {
+        // Direct Grok text call for planning
+        let url = URL(string: "https://api.x.ai/v1/chat/completions")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        let apiKey = ProcessInfo.processInfo.environment["GROK_API_KEY"] ?? ""
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "model": "grok-2-latest",
+            "messages": [["role": "user", "content": prompt]],
+            "max_tokens": 1500
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+
+        guard let choices = json?["choices"] as? [[String: Any]],
+              let message = choices.first?["message"] as? [String: Any],
+              let content = message["content"] as? String else {
+            throw VisionAPIError.invalidResponse
+        }
+
+        return content
+    }
+
+    private func parseArrangementPlan(from response: String) throws -> ArrangementPlan {
+        var jsonString = response
+        if let start = response.range(of: "{"),
+           let end = response.range(of: "}", options: .backwards) {
+            jsonString = String(response[start.lowerBound...end.upperBound])
+        }
+        let data = jsonString.data(using: .utf8)!
+        return try JSONDecoder().decode(ArrangementPlan.self, from: data)
+    }
+}
+```
+
+### 5.6 Updated Capture Flow (Three Paths)
+
+**Tasks:**
+- [ ] Update `CaptureFlowView.swift` to offer three capture methods: Photo, Voice, Manual
+- [ ] Ensure all three paths converge on the same `ItemReviewView` (results page)
+- [ ] Add hierarchy path selection ("Saving to: Room > Location > Storage")
+
+```swift
+// MARK: - CaptureFlowView.swift (revised)
+// Step 1: Choose method (photo / voice / manual text)
+// Step 2a: Camera capture → AI detection
+// Step 2b: Voice capture → AI parsing
+// Step 2c: Manual text entry → AI parsing
+// Step 3: Shared ItemReviewView (results page with edit/delete/add)
+// Step 4: Storage selection (IKEA / custom) + Room/Location assignment
+// Step 5: Save
+
+enum CaptureMethod: String, CaseIterable {
+    case photo = "photo"
+    case voice = "voice"
+    case manual = "manual"
+
+    var icon: String {
+        switch self {
+        case .photo: return "camera.fill"
+        case .voice: return "mic.fill"
+        case .manual: return "text.cursor"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .photo: return "Take Photo"
+        case .voice: return "Speak Items"
+        case .manual: return "Type Items"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .photo: return "Photograph items laid out"
+        case .voice: return "List items by voice"
+        case .manual: return "Enter comma-separated list"
+        }
+    }
+}
+```
+
+### Phase 5 Implementation Order
+
+| Step | Task | Depends On | Priority |
+|------|------|-----------|----------|
+| 5.1.1 | Create `VisionAPIProtocol.swift` | — | P0 |
+| 5.1.2 | Create `GeminiVisionService.swift` | 5.1.1 | P0 |
+| 5.1.3 | Create `GrokVisionService.swift` | 5.1.1 | P0 |
+| 5.1.4 | Create `APIProviderManager.swift` | 5.1.2, 5.1.3 | P0 |
+| 5.1.5 | Migrate all GPTService calls → protocol | 5.1.4 | P0 |
+| 5.2.1 | Create `Room.swift` model | — | P0 |
+| 5.2.2 | Create `Location.swift` model | 5.2.1 | P0 |
+| 5.2.3 | Update `StorageSpace.swift` with location ref | 5.2.2 | P0 |
+| 5.2.4 | Update SwiftData container | 5.2.3 | P0 |
+| 5.3.1 | Create `RoomSectionView.swift` | 5.2.1 | P1 |
+| 5.3.2 | Create `LocationSectionView.swift` | 5.2.2 | P1 |
+| 5.3.3 | Rewrite `HomeView.swift` (mind map) | 5.3.1, 5.3.2 | P1 |
+| 5.3.4 | Add Room/Location CRUD views | 5.3.3 | P1 |
+| 5.4.1 | Create `ManualEntryView.swift` | 5.1.4 | P1 |
+| 5.4.2 | Update `CaptureFlowView.swift` (three paths) | 5.4.1 | P1 |
+| 5.4.3 | Update `ItemReviewView.swift` (shared results) | 5.4.2 | P1 |
+| 5.5.1 | Create `LayoutImagePipeline.swift` | 5.1.3 | P2 |
+| 5.5.2 | Create `LayoutImageView.swift` | 5.5.1 | P2 |
+| 5.5.3 | Add "Visualize" button to detail view | 5.5.2 | P2 |
+| 5.6.1 | Data migration (existing → "Unsorted") | 5.2.4 | P1 |
+| 5.6.2 | Long-press drag reorder | 5.3.3 | P2 |
+
+### Phase 5 Deliverable
+
+> User can capture items via photo, voice, OR comma-separated text entry. All AI calls go through Gemini (primary) with automatic Grok fallback. Storage spaces are organized into Rooms and Locations, displayed as a collapsible mind-map on the home screen. Users can generate AI-powered visual previews of organized layouts using a custom Grok-plan + Gemini-image pipeline.
+
+---
+
 ## Risk Mitigation
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| Object detection accuracy too low | Medium | High | GPT-4V is strong; fallback to voice capture |
+| Object detection accuracy too low | Medium | High | Gemini + Grok dual-provider with auto-fallback |
 | Layout algorithm produces poor results | Medium | Medium | Start simple, iterate based on feedback |
 | IKEA dimensions incomplete | Low | Medium | Start with top 10 products, expand |
-| GPT API costs spike | Low | Medium | Cache grouping results, batch requests |
+| API costs spike | Low | Medium | Gemini Flash is cost-effective; cache grouping results |
+| Gemini image generation quality | Medium | Medium | Fallback to schematic-only view if generated images aren't useful |
+| Provider API downtime | Low | High | Auto-fallback between Gemini and Grok |
+| Room hierarchy too complex for ADHD users | Medium | High | Default "Unsorted" room; hierarchy is optional, not required |
 | Solo dev burnout | High | High | Cut P2 features, strict phase discipline |
 
 ---
@@ -1730,15 +2676,20 @@ The MVP is ready for beta when a user can:
 
 ---
 
-## Immediate Next Steps
+## Immediate Next Steps (Phase 5)
 
-1. **Create Xcode project** with SwiftUI + SwiftData
-2. **Implement data models** (StorageSpace, Item)
-3. **Create ikea_products.json** with top 10 IKEA products
-4. **Build camera capture + GPT detection pipeline**
-5. **Test with real drawer photos**
+1. **Create `VisionAPIProtocol`** and implement `GeminiVisionService` — replace OpenAI
+2. **Create `GrokVisionService`** as backup provider
+3. **Create `APIProviderManager`** with auto-fallback logic
+4. **Migrate all GPTService calls** throughout the app to use the protocol
+5. **Add `Room` and `Location` SwiftData models** with relationships
+6. **Rewrite HomeView** as collapsible mind-map with room/location sections
+7. **Create `ManualEntryView`** for comma-separated text item entry
+8. **Unify capture flow** — three paths (photo/voice/manual) converging on shared results page
+9. **Build `LayoutImagePipeline`** — Grok planning + Gemini image generation
+10. **Test end-to-end** — compare Gemini vs Grok detection quality on real drawer photos
 
-Start with the **capture → review → save flow**. Everything else follows from having items in the database.
+Start with the **API abstraction layer** (steps 1-4). Everything else depends on the provider migration being solid.
 
 ---
 
