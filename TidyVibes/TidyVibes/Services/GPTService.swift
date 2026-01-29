@@ -1,13 +1,13 @@
 import Foundation
 import UIKit
 
-struct DetectedItem: Codable, Identifiable {
+struct DetectedItem: Codable, Identifiable, Equatable {
     let id: UUID
     let name: String
     let quantity: Int
     let boundingBox: BoundingBox?
 
-    struct BoundingBox: Codable {
+    struct BoundingBox: Codable, Equatable {
         let x: Double      // Normalized 0-1
         let y: Double
         let width: Double
