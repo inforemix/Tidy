@@ -18,6 +18,10 @@ class StorageSpace {
 
     // Photos
     var photo: Data?  // Original photo of storage
+    var generatedImage: Data?  // AI-generated layout preview
+
+    // Hierarchy
+    var location: Location?
 
     // Timestamps
     var createdAt: Date = Date()
@@ -33,5 +37,18 @@ class StorageSpace {
         self.widthInches = width
         self.depthInches = depth
         self.heightInches = height
+    }
+
+    /// Full hierarchy path: "Bedroom > Closet > ALEX Drawer Unit"
+    var hierarchyPath: String {
+        var parts: [String] = []
+        if let room = location?.room {
+            parts.append(room.name)
+        }
+        if let loc = location {
+            parts.append(loc.name)
+        }
+        parts.append(name)
+        return parts.joined(separator: " > ")
     }
 }
