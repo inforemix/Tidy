@@ -5,6 +5,8 @@ import SwiftData
 struct TidyVibesApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
+            Room.self,
+            Location.self,
             StorageSpace.self,
             Item.self,
         ])

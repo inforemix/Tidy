@@ -5,8 +5,11 @@ struct StorageDetailView: View {
     let space: StorageSpace
 
     @State private var showingLayoutSuggestion = false
+    @State private var showingLayoutImage = false
     @State private var showingSearch = false
     @State private var highlightedItemId: UUID?
+    @State private var layoutSuggestion: LayoutSuggestion?
+    @State private var isLoadingSuggestion = false
 
     var body: some View {
         ScrollView {
@@ -43,23 +46,37 @@ struct StorageDetailView: View {
                     .padding()
 
                 // Actions
-                HStack(spacing: 12) {
-                    Button(action: { showingSearch = true }) {
-                        Label("Search", systemImage: "magnifyingglass")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        Button(action: { showingSearch = true }) {
+                            Label("Search", systemImage: "magnifyingglass")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
+                        }
+
+                        Button(action: { generateSuggestion() }) {
+                            Label("Suggest Layout", systemImage: "sparkles")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.accentColor.opacity(0.1))
+                                .foregroundColor(.accentColor)
+                                .cornerRadius(12)
+                        }
+                        .disabled(isLoadingSuggestion || space.items.isEmpty)
                     }
 
-                    Button(action: { showingLayoutSuggestion = true }) {
-                        Label("Suggest Layout", systemImage: "sparkles")
+                    Button(action: { showingLayoutImage = true }) {
+                        Label("Visualize Layout", systemImage: "photo.badge.plus")
+                            .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.accentColor.opacity(0.1))
-                            .foregroundColor(.accentColor)
+                            .background(Color.orange.opacity(0.15))
+                            .foregroundColor(.orange)
                             .cornerRadius(12)
                     }
+                    .disabled(space.items.isEmpty)
                 }
                 .padding(.horizontal)
 
@@ -90,5 +107,67 @@ struct StorageDetailView: View {
                 showingSearch = false
             })
         }
+        .sheet(isPresented: $showingLayoutSuggestion) {
+            if let suggestion = layoutSuggestion {
+                LayoutSuggestionView(
+                    space: space,
+                    suggestion: suggestion,
+                    onApply: {
+                        applyLayoutSuggestion(suggestion)
+                        showingLayoutSuggestion = false
+                    },
+                    onDismiss: {
+                        showingLayoutSuggestion = false
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $showingLayoutImage) {
+            LayoutImageView(space: space)
+        }
+        .overlay {
+            if isLoadingSuggestion {
+                LoadingOverlay(message: "Analyzing items...")
+            }
+        }
+    }
+
+    private func generateSuggestion() {
+        isLoadingSuggestion = true
+        Task {
+            do {
+                let itemNames = space.items.map { $0.name }
+                let groups = try await APIProviderManager.shared
+                    .withFallback { provider in
+                        try await provider.groupItems(itemNames)
+                    }
+                let suggestion = LayoutEngine.shared.generateLayout(
+                    items: space.items,
+                    groups: groups,
+                    storage: space,
+                    style: .smart
+                )
+                await MainActor.run {
+                    layoutSuggestion = suggestion
+                    isLoadingSuggestion = false
+                    showingLayoutSuggestion = true
+                }
+            } catch {
+                print("Error generating layout suggestion: \(error)")
+                await MainActor.run {
+                    isLoadingSuggestion = false
+                }
+            }
+        }
+    }
+
+    private func applyLayoutSuggestion(_ suggestion: LayoutSuggestion) {
+        for item in space.items {
+            if let position = suggestion.positions[item.id] {
+                item.positionX = position.x
+                item.positionY = position.y
+            }
+        }
+        space.updatedAt = Date()
     }
 }

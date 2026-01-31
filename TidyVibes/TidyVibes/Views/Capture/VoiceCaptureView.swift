@@ -132,9 +132,11 @@ struct VoiceCaptureView: View {
     private func processTranscript() async {
         isProcessing = true
         do {
-            let items = try await GPTService.shared.parseVoiceInput(speechService.transcript)
+            let items = try await APIProviderManager.shared
+                .withFallback { provider in
+                    try await provider.parseItemInput(speechService.transcript)
+                }
             detectedItems = items
-            dismiss()
         } catch {
             print("Error processing transcript: \(error)")
         }

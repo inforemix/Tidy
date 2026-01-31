@@ -1,10 +1,5 @@
 import SwiftUI
 
-enum CaptureMethod {
-    case photo
-    case voice
-}
-
 struct CaptureFlowView: View {
     @Environment(\.dismiss) var dismiss
 
@@ -57,6 +52,8 @@ struct CaptureFlowView: View {
         }
     }
 
+    // MARK: - Method Selection (3 paths)
+
     private var methodSelectionView: some View {
         VStack(spacing: 32) {
             Spacer()
@@ -75,61 +72,21 @@ struct CaptureFlowView: View {
 
             VStack(spacing: 16) {
                 // Photo option
-                Button(action: {
+                captureMethodButton(method: .photo) {
                     captureMethod = .photo
                     showingCamera = true
-                }) {
-                    HStack {
-                        Image(systemName: "camera.fill")
-                            .font(.title2)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Take a Photo")
-                                .font(.headline)
-
-                            Text("Lay out items and snap a picture")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.accentColor.opacity(0.1))
-                    .cornerRadius(12)
                 }
 
                 // Voice option
-                Button(action: {
+                captureMethodButton(method: .voice) {
                     captureMethod = .voice
                     currentStep = .capture
-                }) {
-                    HStack {
-                        Image(systemName: "mic.fill")
-                            .font(.title2)
+                }
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Speak Your Items")
-                                .font(.headline)
-
-                            Text("Dictate what's in your storage")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
+                // Manual text option
+                captureMethodButton(method: .manual) {
+                    captureMethod = .manual
+                    currentStep = .capture
                 }
             }
             .padding(.horizontal)
@@ -148,25 +105,68 @@ struct CaptureFlowView: View {
         }
     }
 
+    private func captureMethodButton(method: CaptureMethod, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: method.icon)
+                    .font(.title2)
+                    .foregroundColor(method.accentColor)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(method.title)
+                        .font(.headline)
+
+                    Text(method.subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(method.accentColor.opacity(0.1))
+            .cornerRadius(12)
+        }
+    }
+
+    // MARK: - Capture Views
+
     private var captureView: some View {
         Group {
-            if captureMethod == .voice {
+            switch captureMethod {
+            case .voice:
                 VoiceCaptureView(detectedItems: $detectedItems, isProcessing: $isProcessing)
                     .onChange(of: detectedItems) { _, newItems in
                         if !newItems.isEmpty {
                             currentStep = .review
                         }
                     }
-            } else {
+            case .manual:
+                ManualEntryView(detectedItems: $detectedItems, isProcessing: $isProcessing)
+                    .onChange(of: detectedItems) { _, newItems in
+                        if !newItems.isEmpty {
+                            currentStep = .review
+                        }
+                    }
+            default:
                 EmptyView()
             }
         }
     }
 
+    // MARK: - Processing
+
     private func processImage(_ image: UIImage) async {
         isProcessing = true
         do {
-            let items = try await GPTService.shared.detectItems(in: image)
+            let items = try await APIProviderManager.shared
+                .withFallback { provider in
+                    try await provider.detectItems(in: image)
+                }
             detectedItems = items
             currentStep = .review
         } catch {
