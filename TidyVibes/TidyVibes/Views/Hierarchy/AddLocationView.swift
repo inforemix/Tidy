@@ -7,7 +7,12 @@ struct AddLocationView: View {
 
     let room: Room
 
+    /// Pass an existing location to enable edit mode; leave nil for create mode.
+    var existingLocation: Location?
+
     @State private var locationName = ""
+
+    private var isEditing: Bool { existingLocation != nil }
 
     private let suggestions = [
         "Closet", "Nightstand", "Under Bed", "Desk",
@@ -50,28 +55,37 @@ struct AddLocationView: View {
 
                 Section {
                     Button(action: saveLocation) {
-                        Text("Add to \(room.name)")
+                        Text(isEditing ? "Save Changes" : "Add to \(room.name)")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                     }
                     .disabled(locationName.isEmpty)
                 }
             }
-            .navigationTitle("Add Location")
+            .navigationTitle(isEditing ? "Edit Location" : "Add Location")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .onAppear {
+                if let location = existingLocation {
+                    locationName = location.name
+                }
+            }
         }
     }
 
     private func saveLocation() {
-        let location = Location(name: locationName)
-        location.room = room
-        location.sortOrder = room.locations.count
-        modelContext.insert(location)
+        if let location = existingLocation {
+            location.name = locationName
+        } else {
+            let location = Location(name: locationName)
+            location.room = room
+            location.sortOrder = room.locations.count
+            modelContext.insert(location)
+        }
         try? modelContext.save()
         dismiss()
     }

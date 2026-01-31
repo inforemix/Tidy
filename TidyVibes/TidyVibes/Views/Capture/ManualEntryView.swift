@@ -4,7 +4,6 @@ struct ManualEntryView: View {
     @Binding var detectedItems: [DetectedItem]
     @Binding var isProcessing: Bool
     @State private var itemText: String = ""
-    @State private var errorMessage: String?
 
     var body: some View {
         VStack(spacing: 24) {
@@ -44,33 +43,19 @@ struct ManualEntryView: View {
             }
             .padding(.horizontal)
 
-            if let error = errorMessage {
-                Text(error)
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .padding(.horizontal)
-            }
-
             Spacer()
 
-            // Process button
+            // Process button — parses locally, no API key needed
             Button(action: processItems) {
-                if isProcessing {
-                    ProgressView()
-                        .tint(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                } else {
-                    Label("Process Items", systemImage: "sparkles")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                }
+                Label("Add Items", systemImage: "plus.circle.fill")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
             }
             .background(itemText.isEmpty ? Color(.systemGray4) : Color.orange)
             .foregroundColor(.white)
             .cornerRadius(12)
-            .disabled(itemText.isEmpty || isProcessing)
+            .disabled(itemText.isEmpty)
             .padding(.horizontal)
             .padding(.bottom)
         }
@@ -78,25 +63,43 @@ struct ManualEntryView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    // MARK: - Local Parsing (no API key required)
+
     private func processItems() {
-        errorMessage = nil
-        isProcessing = true
-        Task {
-            do {
-                let items = try await APIProviderManager.shared
-                    .withFallback { provider in
-                        try await provider.parseItemInput(itemText)
-                    }
-                await MainActor.run {
-                    detectedItems = items
-                    isProcessing = false
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = "Failed to parse items: \(error.localizedDescription)"
-                    isProcessing = false
-                }
-            }
+        let items = parseItemsLocally(itemText)
+        if !items.isEmpty {
+            detectedItems = items
         }
+    }
+
+    /// Parses comma-separated text into DetectedItems without any network call.
+    /// Handles quantity suffixes like "x2", "x 3", "×5".
+    private func parseItemsLocally(_ text: String) -> [DetectedItem] {
+        let parts = text.components(separatedBy: ",")
+        var items: [DetectedItem] = []
+
+        for part in parts {
+            var trimmed = part.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+
+            var quantity = 1
+
+            // Match trailing quantity: "tape x2", "pens × 5", "item x 10"
+            if let range = trimmed.range(
+                of: #"\s*[x×]\s*(\d+)\s*$"#,
+                options: [.regularExpression, .caseInsensitive]
+            ) {
+                let matched = String(trimmed[range])
+                let digits = matched.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+                quantity = Int(digits) ?? 1
+                trimmed = String(trimmed[trimmed.startIndex..<range.lowerBound])
+                    .trimmingCharacters(in: .whitespaces)
+            }
+
+            guard !trimmed.isEmpty else { continue }
+            items.append(DetectedItem(name: trimmed, quantity: quantity))
+        }
+
+        return items
     }
 }

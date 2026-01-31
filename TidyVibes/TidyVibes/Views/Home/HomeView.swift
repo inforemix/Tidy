@@ -61,7 +61,7 @@ struct HomeView: View {
                             Label("Add Room", systemImage: "house.fill")
                         }
                         Button(action: { showingCapture = true }) {
-                            Label("Add Storage", systemImage: "plus.circle.fill")
+                            Label("Add Items", systemImage: "plus.circle.fill")
                         }
                     } label: {
                         Image(systemName: "plus.circle.fill")

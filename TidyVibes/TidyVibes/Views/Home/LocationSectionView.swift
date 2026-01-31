@@ -1,8 +1,12 @@
 import SwiftUI
+import SwiftData
 
 struct LocationSectionView: View {
+    @Environment(\.modelContext) private var modelContext
     let location: Location
     @State private var isExpanded = true
+    @State private var showingEditLocation = false
+    @State private var showingDeleteConfirmation = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,6 +41,15 @@ struct LocationSectionView: View {
                 .padding(.vertical, 8)
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                Button(action: { showingEditLocation = true }) {
+                    Label("Edit Location", systemImage: "pencil")
+                }
+                Divider()
+                Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
+                    Label("Delete Location", systemImage: "trash")
+                }
+            }
 
             // Storage spaces within this location
             if isExpanded {
@@ -58,6 +71,22 @@ struct LocationSectionView: View {
                         .padding(.vertical, 4)
                 }
             }
+        }
+        .sheet(isPresented: $showingEditLocation) {
+            if let room = location.room {
+                AddLocationView(room: room, existingLocation: location)
+            }
+        }
+        .alert("Delete Location?", isPresented: $showingDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                withAnimation {
+                    modelContext.delete(location)
+                    try? modelContext.save()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will delete \"\(location.name)\" and all its storage spaces and items. This cannot be undone.")
         }
     }
 }

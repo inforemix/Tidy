@@ -5,10 +5,15 @@ struct AddRoomView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) var dismiss
 
+    /// Pass an existing room to enable edit mode; leave nil for create mode.
+    var existingRoom: Room?
+
     @State private var roomName = ""
     @State private var selectedPreset: RoomPreset?
     @State private var customIcon = "square.dashed"
     @State private var customColor = "#78909C"
+
+    private var isEditing: Bool { existingRoom != nil }
 
     var body: some View {
         NavigationView {
@@ -30,18 +35,27 @@ struct AddRoomView: View {
 
                 Section {
                     Button(action: saveRoom) {
-                        Text("Create Room")
+                        Text(isEditing ? "Save Changes" : "Create Room")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                     }
                     .disabled(roomName.isEmpty)
                 }
             }
-            .navigationTitle("Add Room")
+            .navigationTitle(isEditing ? "Edit Room" : "Add Room")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                }
+            }
+            .onAppear {
+                if let room = existingRoom {
+                    roomName = room.name
+                    customIcon = room.icon ?? "square.dashed"
+                    customColor = room.color ?? "#78909C"
+                    // Select matching preset if any
+                    selectedPreset = RoomPreset.presets.first { $0.icon == room.icon && $0.color == room.color }
                 }
             }
         }
@@ -51,7 +65,7 @@ struct AddRoomView: View {
         let isSelected = selectedPreset?.name == preset.name
         return Button(action: {
             selectedPreset = preset
-            if roomName.isEmpty {
+            if roomName.isEmpty || isEditing {
                 roomName = preset.name
             }
             customIcon = preset.icon
@@ -79,8 +93,14 @@ struct AddRoomView: View {
     }
 
     private func saveRoom() {
-        let room = Room(name: roomName, icon: customIcon, color: customColor)
-        modelContext.insert(room)
+        if let room = existingRoom {
+            room.name = roomName
+            room.icon = customIcon
+            room.color = customColor
+        } else {
+            let room = Room(name: roomName, icon: customIcon, color: customColor)
+            modelContext.insert(room)
+        }
         try? modelContext.save()
         dismiss()
     }

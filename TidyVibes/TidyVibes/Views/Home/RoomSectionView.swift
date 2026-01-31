@@ -2,8 +2,11 @@ import SwiftUI
 import SwiftData
 
 struct RoomSectionView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var room: Room
     @State private var showingAddLocation = false
+    @State private var showingEditRoom = false
+    @State private var showingDeleteConfirmation = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -51,6 +54,18 @@ struct RoomSectionView: View {
                 .background(Color(.systemBackground))
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                Button(action: { showingAddLocation = true }) {
+                    Label("Add Location", systemImage: "plus")
+                }
+                Button(action: { showingEditRoom = true }) {
+                    Label("Edit Room", systemImage: "pencil")
+                }
+                Divider()
+                Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
+                    Label("Delete Room", systemImage: "trash")
+                }
+            }
 
             // Expanded content — locations
             if !room.isCollapsed {
@@ -81,6 +96,20 @@ struct RoomSectionView: View {
         }
         .sheet(isPresented: $showingAddLocation) {
             AddLocationView(room: room)
+        }
+        .sheet(isPresented: $showingEditRoom) {
+            AddRoomView(existingRoom: room)
+        }
+        .alert("Delete Room?", isPresented: $showingDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                withAnimation {
+                    modelContext.delete(room)
+                    try? modelContext.save()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will delete \"\(room.name)\" and all its locations, storage spaces, and items. This cannot be undone.")
         }
     }
 }
