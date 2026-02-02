@@ -2,8 +2,10 @@ import SwiftUI
 import SwiftData
 
 struct RoomSectionView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var room: Room
     @State private var showingAddLocation = false
+    @State private var showingDeleteConfirmation = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,13 +39,18 @@ struct RoomSectionView: View {
                             .foregroundColor(.secondary)
                     }
 
-                    Button(action: { showingAddLocation = true }) {
-                        Image(systemName: "plus")
+                    Menu {
+                        Button(action: { showingAddLocation = true }) {
+                            Label("Add Location", systemImage: "plus")
+                        }
+                        Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
+                            Label("Delete Room", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .padding(6)
-                            .background(Color(.systemGray5))
-                            .clipShape(Circle())
                     }
                 }
                 .padding(.horizontal)
@@ -82,5 +89,18 @@ struct RoomSectionView: View {
         .sheet(isPresented: $showingAddLocation) {
             AddLocationView(room: room)
         }
+        .alert("Delete Room?", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                deleteRoom()
+            }
+        } message: {
+            Text("This will delete \(room.name) and all its locations, storage spaces, and items. This action cannot be undone.")
+        }
+    }
+
+    private func deleteRoom() {
+        modelContext.delete(room)
+        try? modelContext.save()
     }
 }

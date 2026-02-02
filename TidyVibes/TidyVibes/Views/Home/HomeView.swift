@@ -3,11 +3,13 @@ import SwiftData
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query(sort: \House.sortOrder) private var houses: [House]
     @Query(sort: \Room.sortOrder) private var rooms: [Room]
     @Query private var allSpaces: [StorageSpace]
 
     @State private var showingCapture = false
     @State private var showingSearch = false
+    @State private var showingAddHouse = false
     @State private var showingAddRoom = false
 
     /// Storage spaces not assigned to any location
@@ -15,10 +17,15 @@ struct HomeView: View {
         allSpaces.filter { $0.location == nil }
     }
 
+    /// Rooms not assigned to any house
+    var unassignedRooms: [Room] {
+        rooms.filter { $0.house == nil }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
-                if rooms.isEmpty && allSpaces.isEmpty {
+                if houses.isEmpty && rooms.isEmpty && allSpaces.isEmpty {
                     EmptyStateView(showingCapture: $showingCapture)
                 } else {
                     ScrollView {
@@ -39,9 +46,14 @@ struct HomeView: View {
                             .padding(.horizontal)
                             .padding(.bottom, 12)
 
-                            // Room sections (collapsible mind-map)
-                            ForEach(rooms) { room in
-                                RoomSectionView(room: room)
+                            // House sections (top level)
+                            ForEach(houses) { house in
+                                HouseSectionView(house: house)
+                            }
+
+                            // Unassigned rooms (rooms without a house)
+                            if !unassignedRooms.isEmpty {
+                                UnassignedRoomsSectionView(rooms: unassignedRooms)
                             }
 
                             // Unsorted section for unassigned storage
@@ -57,8 +69,11 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
+                        Button(action: { showingAddHouse = true }) {
+                            Label("Add House/Address", systemImage: "house.fill")
+                        }
                         Button(action: { showingAddRoom = true }) {
-                            Label("Add Room", systemImage: "house.fill")
+                            Label("Add Room", systemImage: "door.left.hand.open")
                         }
                         Button(action: { showingCapture = true }) {
                             Label("Add Storage", systemImage: "plus.circle.fill")
@@ -77,9 +92,68 @@ struct HomeView: View {
                     showingSearch = false
                 })
             }
+            .sheet(isPresented: $showingAddHouse) {
+                AddHouseView()
+            }
             .sheet(isPresented: $showingAddRoom) {
                 AddRoomView()
             }
+        }
+    }
+}
+
+// MARK: - Unassigned Rooms Section
+
+struct UnassignedRoomsSectionView: View {
+    let rooms: [Room]
+    @State private var isCollapsed = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isCollapsed.toggle()
+                }
+            }) {
+                HStack(spacing: 10) {
+                    Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .frame(width: 16)
+
+                    Image(systemName: "questionmark.folder.fill")
+                        .font(.body)
+                        .foregroundColor(.orange)
+
+                    Text("Unassigned Rooms")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    Spacer()
+
+                    if isCollapsed {
+                        Text("\(rooms.count) room\(rooms.count == 1 ? "" : "s")")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+                .background(Color(.systemBackground))
+            }
+            .buttonStyle(.plain)
+
+            // Rooms
+            if !isCollapsed {
+                ForEach(rooms) { room in
+                    RoomSectionView(room: room)
+                        .padding(.leading, 24)
+                }
+            }
+
+            Divider()
+                .padding(.leading, 16)
         }
     }
 }

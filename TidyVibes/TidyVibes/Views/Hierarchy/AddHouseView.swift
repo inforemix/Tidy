@@ -1,33 +1,32 @@
 import SwiftUI
 import SwiftData
 
-struct AddRoomView: View {
+struct AddHouseView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) var dismiss
 
-    let house: House?
-
-    @State private var roomName = ""
-    @State private var selectedPreset: RoomPreset?
-    @State private var customIcon = "square.dashed"
-    @State private var customColor = "#78909C"
-
-    init(house: House? = nil) {
-        self.house = house
-    }
+    @State private var houseName = ""
+    @State private var address = ""
+    @State private var selectedPreset: HousePreset?
+    @State private var customIcon = "house.fill"
+    @State private var customColor = "#4A90E2"
 
     var body: some View {
         NavigationView {
             Form {
-                Section("Room Name") {
-                    TextField("e.g. Bedroom, Kitchen, Garage", text: $roomName)
+                Section("House Name") {
+                    TextField("e.g. Main Home, Beach House", text: $houseName)
+                }
+
+                Section("Address (Optional)") {
+                    TextField("e.g. 123 Main St, Anytown, USA", text: $address)
                 }
 
                 Section("Choose a preset") {
                     LazyVGrid(columns: [
                         GridItem(.adaptive(minimum: 80))
                     ], spacing: 12) {
-                        ForEach(RoomPreset.presets, id: \.name) { preset in
+                        ForEach(HousePreset.presets, id: \.name) { preset in
                             presetButton(preset)
                         }
                     }
@@ -35,15 +34,15 @@ struct AddRoomView: View {
                 }
 
                 Section {
-                    Button(action: saveRoom) {
-                        Text("Create Room")
+                    Button(action: saveHouse) {
+                        Text("Create House")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                     }
-                    .disabled(roomName.isEmpty)
+                    .disabled(houseName.isEmpty)
                 }
             }
-            .navigationTitle("Add Room")
+            .navigationTitle("Add House/Address")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -53,12 +52,12 @@ struct AddRoomView: View {
         }
     }
 
-    private func presetButton(_ preset: RoomPreset) -> some View {
+    private func presetButton(_ preset: HousePreset) -> some View {
         let isSelected = selectedPreset?.name == preset.name
         return Button(action: {
             selectedPreset = preset
-            if roomName.isEmpty {
-                roomName = preset.name
+            if houseName.isEmpty {
+                houseName = preset.name
             }
             customIcon = preset.icon
             customColor = preset.color
@@ -84,10 +83,9 @@ struct AddRoomView: View {
         .buttonStyle(.plain)
     }
 
-    private func saveRoom() {
-        let room = Room(name: roomName, icon: customIcon, color: customColor)
-        room.house = house
-        modelContext.insert(room)
+    private func saveHouse() {
+        let house = House(name: houseName, address: address.isEmpty ? nil : address, icon: customIcon, color: customColor)
+        modelContext.insert(house)
         try? modelContext.save()
         dismiss()
     }

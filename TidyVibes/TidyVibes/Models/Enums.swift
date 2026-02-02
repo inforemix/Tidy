@@ -107,3 +107,23 @@ struct RoomPreset {
         RoomPreset(name: "Other", icon: "square.dashed", color: "#78909C"),
     ]
 }
+
+// MARK: - House Preset Icons
+
+struct HousePreset {
+    let name: String
+    let icon: String
+    let color: String
+
+    static let presets: [HousePreset] = [
+        HousePreset(name: "Main Home", icon: "house.fill", color: "#4A90E2"),
+        HousePreset(name: "Beach House", icon: "house.and.flag.fill", color: "#00BCD4"),
+        HousePreset(name: "Apartment", icon: "building.2.fill", color: "#7E57C2"),
+        HousePreset(name: "Cabin", icon: "tree.fill", color: "#8D6E63"),
+        HousePreset(name: "Office", icon: "building.fill", color: "#546E7A"),
+        HousePreset(name: "Condo", icon: "building.columns.fill", color: "#5C6BC0"),
+        HousePreset(name: "Vacation Home", icon: "sun.max.fill", color: "#FFA726"),
+        HousePreset(name: "Storage Unit", icon: "archivebox.fill", color: "#78909C"),
+        HousePreset(name: "Other", icon: "location.fill", color: "#90A4AE"),
+    ]
+}

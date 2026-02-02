@@ -12,6 +12,8 @@ class Room {
     var isCollapsed: Bool = false
     var createdAt: Date = Date()
 
+    var house: House?
+
     @Relationship(deleteRule: .cascade, inverse: \Location.room)
     var locations: [Location] = []
 

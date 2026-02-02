@@ -2,6 +2,8 @@ import SwiftUI
 import SwiftData
 
 struct StorageDetailView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) var dismiss
     let space: StorageSpace
 
     @State private var showingLayoutSuggestion = false
@@ -10,6 +12,8 @@ struct StorageDetailView: View {
     @State private var highlightedItemId: UUID?
     @State private var layoutSuggestion: LayoutSuggestion?
     @State private var isLoadingSuggestion = false
+    @State private var showingDeleteStorageConfirmation = false
+    @State private var itemToMove: Item?
 
     var body: some View {
         ScrollView {
@@ -87,20 +91,34 @@ struct StorageDetailView: View {
                         .padding(.horizontal)
 
                     ForEach(space.items) { item in
-                        ItemRowView(item: item)
-                            .onTapGesture {
-                                highlightedItemId = item.id
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                    highlightedItemId = nil
-                                }
+                        ItemRowView(item: item, onMove: { item in
+                            itemToMove = item
+                        })
+                        .onTapGesture {
+                            highlightedItemId = item.id
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                highlightedItemId = nil
                             }
+                        }
                     }
+                    .onDelete(perform: deleteItems)
                 }
                 .padding(.vertical)
             }
         }
         .navigationTitle(space.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button(role: .destructive, action: { showingDeleteStorageConfirmation = true }) {
+                        Label("Delete Storage", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
         .sheet(isPresented: $showingSearch) {
             SearchView(spaces: [space], onItemSelected: { item in
                 highlightedItemId = item.id
@@ -125,11 +143,36 @@ struct StorageDetailView: View {
         .sheet(isPresented: $showingLayoutImage) {
             LayoutImageView(space: space)
         }
+        .sheet(item: $itemToMove) { item in
+            MoveItemView(item: item)
+        }
+        .alert("Delete Storage?", isPresented: $showingDeleteStorageConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                deleteStorage()
+            }
+        } message: {
+            Text("This will delete \(space.name) and all its items. This action cannot be undone.")
+        }
         .overlay {
             if isLoadingSuggestion {
                 LoadingOverlay(message: "Analyzing items...")
             }
         }
+    }
+
+    private func deleteItems(at offsets: IndexSet) {
+        for index in offsets {
+            let item = space.items[index]
+            modelContext.delete(item)
+        }
+        try? modelContext.save()
+    }
+
+    private func deleteStorage() {
+        modelContext.delete(space)
+        try? modelContext.save()
+        dismiss()
     }
 
     private func generateSuggestion() {
