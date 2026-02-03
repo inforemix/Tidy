@@ -4,47 +4,39 @@ struct StorageCardView: View {
     let space: StorageSpace
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
+        HStack(spacing: 10) {
+            // Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(hex: "#6B5FDB").opacity(0.12))
+                    .frame(width: 36, height: 36)
+
                 Image(systemName: StorageType(rawValue: space.storageType)?.icon ?? "square.dashed")
-                    .font(.title)
-                    .foregroundColor(.accentColor)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(space.name)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-
-                    if let ikeaName = space.ikeaProductName {
-                        Text(ikeaName)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#6B5FDB"))
             }
 
-            Divider()
+            // Text
+            VStack(alignment: .leading, spacing: 2) {
+                Text(space.name)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color(hex: "#2D2D2D"))
+                    .lineLimit(1)
 
-            HStack {
-                Label("\(space.items.count) items", systemImage: "square.grid.2x2")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Spacer()
-
-                Text("Updated \(space.updatedAt.formatted(.relative(presentation: .named)))")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Text("\(space.items.count) item\(space.items.count == 1 ? "" : "s")")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(hex: "#9E9E9E"))
             }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(Color(hex: "#BDBDBD"))
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.white.opacity(0.3))
+        .cornerRadius(10)
     }
 }
