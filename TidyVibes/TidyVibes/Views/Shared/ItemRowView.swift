@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ItemRowView: View {
     let item: Item
+    var onMove: ((Item) -> Void)?
 
     var body: some View {
         HStack {
@@ -22,6 +23,15 @@ struct ItemRowView: View {
                 Text("×\(item.quantity)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+            }
+
+            if onMove != nil {
+                Button(action: { onMove?(item) }) {
+                    Image(systemName: "arrow.right.circle")
+                        .foregroundColor(.accentColor)
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding()

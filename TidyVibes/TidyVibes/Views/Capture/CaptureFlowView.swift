@@ -32,8 +32,8 @@ struct CaptureFlowView: View {
                         }
                     }
                 case .storage:
-                    NavigationView {
-                        StorageSelectionView(detectedItems: detectedItems)
+                    HierarchySelectionView(detectedItems: detectedItems) {
+                        dismiss()
                     }
                 }
             }
