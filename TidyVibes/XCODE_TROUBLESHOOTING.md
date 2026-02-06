@@ -93,7 +93,10 @@ StorageSpace.swift
 Item.swift
 IKEAProduct.swift
 Enums.swift
-GPTService.swift
+VisionAPIProtocol.swift
+APIProviderManager.swift
+GeminiVisionService.swift
+GrokVisionService.swift
 IKEADataService.swift
 SpeechService.swift
 SearchService.swift

@@ -161,7 +161,10 @@ TidyVibes
 │   │   ├── IKEAProduct.swift
 │   │   └── Enums.swift
 │   ├── Services/
-│   │   ├── GPTService.swift
+│   │   ├── VisionAPIProtocol.swift
+│   │   ├── APIProviderManager.swift
+│   │   ├── GeminiVisionService.swift
+│   │   ├── GrokVisionService.swift
 │   │   ├── IKEADataService.swift
 │   │   ├── SpeechService.swift
 │   │   ├── SearchService.swift

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -13,6 +14,7 @@ struct HomeView: View {
     @State private var showingAddRoom = false
     @State private var showingMindMap = false
     @State private var showAddMenu = false
+    @State private var draggingHouse: House?
 
     /// Storage spaces not assigned to any location
     var unsortedSpaces: [StorageSpace] {
@@ -85,9 +87,19 @@ struct HomeView: View {
                                 }
                                 .padding(.horizontal, 24)
 
-                                // House sections (top level)
+                                // House sections (top level) — long-press to reorder
                                 ForEach(houses) { house in
                                     HouseSectionView(house: house)
+                                        .onDrag {
+                                            draggingHouse = house
+                                            return NSItemProvider(object: house.id.uuidString as NSString)
+                                        }
+                                        .onDrop(of: [.text], delegate: HouseDropDelegate(
+                                            item: house,
+                                            draggingItem: $draggingHouse,
+                                            houses: houses,
+                                            modelContext: modelContext
+                                        ))
                                 }
 
                                 // Unassigned rooms (rooms without a house)
@@ -300,6 +312,42 @@ struct UnassignedRoomsSectionView: View {
             }
         }
         .padding(.horizontal, 24)
+    }
+}
+
+// MARK: - House Drop Delegate
+
+struct HouseDropDelegate: DropDelegate {
+    let item: House
+    @Binding var draggingItem: House?
+    let houses: [House]
+    let modelContext: ModelContext
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggingItem = nil
+        return true
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard let dragging = draggingItem, dragging.id != item.id else { return }
+        let sorted = houses.sorted { $0.sortOrder < $1.sortOrder }
+        guard let fromIndex = sorted.firstIndex(where: { $0.id == dragging.id }),
+              let toIndex = sorted.firstIndex(where: { $0.id == item.id }) else { return }
+        if fromIndex != toIndex {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                var reordered = sorted
+                let moved = reordered.remove(at: fromIndex)
+                reordered.insert(moved, at: toIndex)
+                for (i, house) in reordered.enumerated() {
+                    house.sortOrder = i
+                }
+                try? modelContext.save()
+            }
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
     }
 }
 
