@@ -25,22 +25,24 @@ struct TidyVibesApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if hasCompletedOnboarding {
-                HomeView()
-            } else {
-                OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
+            Group {
+                if hasCompletedOnboarding {
+                    HomeView()
+                } else {
+                    OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
+                }
+            }
+            .onAppear {
+                if !hasRunPhase5Migration {
+                    runPhase5Migration()
+                }
             }
         }
         .modelContainer(sharedModelContainer)
-        .onAppear {
-            if !hasRunPhase5Migration {
-                runPhase5Migration()
-            }
-        }
     }
 
     /// Phase 5 data migration: assign orphaned StorageSpaces to a default "Unsorted" room.
-    private mutating func runPhase5Migration() {
+    private func runPhase5Migration() {
         let context = sharedModelContainer.mainContext
 
         // Find storage spaces not assigned to any location
