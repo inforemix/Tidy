@@ -5,13 +5,25 @@ import UniformTypeIdentifiers
 struct RoomSectionView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var room: Room
+    @State private var showingAddItems = false
     @State private var showingAddLocation = false
     @State private var showingDeleteConfirmation = false
     @State private var draggingLocation: Location?
 
+    /// All items across all locations and storage spaces in this room
+    private var allItems: [(item: Item, space: StorageSpace)] {
+        room.locations
+            .flatMap { location in
+                location.storageSpaces.flatMap { space in
+                    space.items.map { (item: $0, space: space) }
+                }
+            }
+            .sorted { $0.item.createdAt > $1.item.createdAt }
+    }
+
     var body: some View {
         VStack(spacing: 8) {
-            // Room card
+            // Room card header
             Button(action: {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     room.isCollapsed.toggle()
@@ -38,7 +50,7 @@ struct RoomSectionView: View {
 
                     Spacer()
 
-                    // Item count
+                    // Item count when collapsed
                     if room.isCollapsed {
                         Text("\(room.totalItemCount) items")
                             .font(.system(size: 12))
@@ -57,51 +69,134 @@ struct RoomSectionView: View {
             }
             .buttonStyle(.plain)
             .contextMenu {
+                Button(action: { showingAddItems = true }) {
+                    Label("Add Items", systemImage: "plus.square.on.square")
+                }
                 Button(action: { showingAddLocation = true }) {
-                    Label("Add Location", systemImage: "plus")
+                    Label("Add Location", systemImage: "mappin.and.ellipse")
                 }
                 Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
                     Label("Delete Room", systemImage: "trash")
                 }
             }
 
-            // Expanded content — locations
+            // Expanded content — items and storage
             if !room.isCollapsed {
-                VStack(spacing: 6) {
-                    let sortedLocations = room.locations.sorted { $0.sortOrder < $1.sortOrder }
-                    ForEach(sortedLocations) { location in
-                        LocationSectionView(location: location)
-                            .onDrag {
-                                draggingLocation = location
-                                return NSItemProvider(object: location.id.uuidString as NSString)
-                            }
-                            .onDrop(of: [.text], delegate: LocationDropDelegate(
-                                item: location,
-                                draggingItem: $draggingLocation,
-                                locations: sortedLocations,
-                                modelContext: modelContext
-                            ))
-                    }
+                VStack(spacing: 10) {
+                    // Add Items action row
+                    Button(action: { showingAddItems = true }) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(Color(hex: "#6B5FDB"))
 
-                    if room.locations.isEmpty {
-                        Button(action: { showingAddLocation = true }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(Color(hex: "#6B5FDB"))
-                                Text("Add a location")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(Color(hex: "#6B5FDB"))
+                            Text("Add Items")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color(hex: "#6B5FDB"))
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(Color(hex: "#6B5FDB").opacity(0.5))
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(Color(hex: "#6B5FDB").opacity(0.06))
+                        .cornerRadius(10)
+                    }
+                    .buttonStyle(.plain)
+
+                    if allItems.isEmpty {
+                        // Empty state
+                        VStack(spacing: 6) {
+                            Text("No items yet")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(Color(hex: "#9E9E9E"))
+                            Text("Tap \"Add Items\" to get started")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(hex: "#BDBDBD"))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                    } else {
+                        // Items grouped by storage space
+                        let groupedBySpace = Dictionary(grouping: allItems, by: { $0.space.id })
+                        let spaces = room.locations
+                            .flatMap { $0.storageSpaces }
+                            .sorted { $0.name < $1.name }
+
+                        ForEach(spaces) { space in
+                            if let spaceItems = groupedBySpace[space.id], !spaceItems.isEmpty {
+                                VStack(spacing: 4) {
+                                    // Storage space header
+                                    NavigationLink(destination: StorageDetailView(space: space)) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: StorageType(rawValue: space.storageType)?.icon ?? "square.dashed")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(Color(hex: "#6B5FDB"))
+
+                                            Text(space.name)
+                                                .font(.system(size: 12, weight: .semibold))
+                                                .foregroundColor(Color(hex: "#6B5FDB"))
+
+                                            Spacer()
+
+                                            Text("\(spaceItems.count)")
+                                                .font(.system(size: 11, weight: .medium))
+                                                .foregroundColor(Color(hex: "#9E9E9E"))
+
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 9, weight: .semibold))
+                                                .foregroundColor(Color(hex: "#BDBDBD"))
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(Color(hex: "#6B5FDB").opacity(0.04))
+                                        .cornerRadius(8)
+                                    }
+                                    .buttonStyle(.plain)
+
+                                    // Item rows
+                                    ForEach(spaceItems, id: \.item.id) { entry in
+                                        HStack(spacing: 10) {
+                                            Circle()
+                                                .fill(Color(hex: "#E0E0E0"))
+                                                .frame(width: 6, height: 6)
+
+                                            Text(entry.item.name)
+                                                .font(.system(size: 13))
+                                                .foregroundColor(Color(hex: "#2D2D2D"))
+                                                .lineLimit(1)
+
+                                            Spacer()
+
+                                            if entry.item.quantity > 1 {
+                                                Text("×\(entry.item.quantity)")
+                                                    .font(.system(size: 11, weight: .medium))
+                                                    .foregroundColor(Color(hex: "#9E9E9E"))
+                                            }
+
+                                            if let category = entry.item.category {
+                                                Text(category)
+                                                    .font(.system(size: 10))
+                                                    .foregroundColor(Color(hex: "#BDBDBD"))
+                                                    .lineLimit(1)
+                                            }
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                    }
+                                }
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color(hex: "#6B5FDB").opacity(0.06))
-                            .cornerRadius(10)
                         }
                     }
                 }
                 .padding(.leading, 12)
             }
+        }
+        .sheet(isPresented: $showingAddItems) {
+            CaptureFlowView()
         }
         .sheet(isPresented: $showingAddLocation) {
             AddLocationView(room: room)

@@ -12,8 +12,6 @@ struct HomeView: View {
     @State private var showingSearch = false
     @State private var showingAddHouse = false
     @State private var showingAddRoom = false
-    @State private var showingMindMap = false
-    @State private var showAddMenu = false
     @State private var draggingHouse: House?
 
     /// Storage spaces not assigned to any location
@@ -54,10 +52,20 @@ struct HomeView: View {
 
                                     Spacer()
 
-                                    // Mind map button
-                                    Button(action: { showingMindMap = true }) {
-                                        Image(systemName: "map")
-                                            .font(.system(size: 20))
+                                    // Add button
+                                    Menu {
+                                        Button(action: { showingAddHouse = true }) {
+                                            Label("Add House", systemImage: "house.fill")
+                                        }
+                                        Button(action: { showingAddRoom = true }) {
+                                            Label("Add Room", systemImage: "door.left.hand.open")
+                                        }
+                                        Button(action: { showingCapture = true }) {
+                                            Label("Add Items", systemImage: "plus.square.on.square")
+                                        }
+                                    } label: {
+                                        Image(systemName: "plus")
+                                            .font(.system(size: 20, weight: .medium))
                                             .foregroundColor(Color(hex: "#6B5FDB"))
                                             .frame(width: 44, height: 44)
                                             .background(Color.white)
@@ -112,123 +120,13 @@ struct HomeView: View {
                                     UnsortedSectionView(spaces: unsortedSpaces)
                                 }
 
-                                Spacer(minLength: 100)
+                                Spacer(minLength: 24)
                             }
                             .padding(.vertical, 8)
                         }
                     }
                 }
 
-                // Floating Action Button (FAB)
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-
-                        // Add menu overlay
-                        if showAddMenu {
-                            VStack(spacing: 12) {
-                                // Add House
-                                Button(action: {
-                                    showAddMenu = false
-                                    showingAddHouse = true
-                                }) {
-                                    HStack {
-                                        Text("Add House")
-                                            .font(.system(size: 15, weight: .medium))
-                                            .foregroundColor(Color(hex: "#2D2D2D"))
-                                        Spacer()
-                                        Image(systemName: "house.fill")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(Color(hex: "#6B5FDB"))
-                                            .frame(width: 40, height: 40)
-                                            .background(Color(hex: "#6B5FDB").opacity(0.1))
-                                            .clipShape(Circle())
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
-                                    .background(Color.white)
-                                    .cornerRadius(12)
-                                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-                                }
-
-                                // Add Room
-                                Button(action: {
-                                    showAddMenu = false
-                                    showingAddRoom = true
-                                }) {
-                                    HStack {
-                                        Text("Add Room")
-                                            .font(.system(size: 15, weight: .medium))
-                                            .foregroundColor(Color(hex: "#2D2D2D"))
-                                        Spacer()
-                                        Image(systemName: "door.left.hand.open")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(Color(hex: "#6B5FDB"))
-                                            .frame(width: 40, height: 40)
-                                            .background(Color(hex: "#6B5FDB").opacity(0.1))
-                                            .clipShape(Circle())
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
-                                    .background(Color.white)
-                                    .cornerRadius(12)
-                                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-                                }
-
-                                // Add Items
-                                Button(action: {
-                                    showAddMenu = false
-                                    showingCapture = true
-                                }) {
-                                    HStack {
-                                        Text("Add Items")
-                                            .font(.system(size: 15, weight: .medium))
-                                            .foregroundColor(Color(hex: "#2D2D2D"))
-                                        Spacer()
-                                        Image(systemName: "photo")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(Color(hex: "#6B5FDB"))
-                                            .frame(width: 40, height: 40)
-                                            .background(Color(hex: "#6B5FDB").opacity(0.1))
-                                            .clipShape(Circle())
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
-                                    .background(Color.white)
-                                    .cornerRadius(12)
-                                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-                                }
-                            }
-                            .padding(.trailing, 24)
-                            .padding(.bottom, 12)
-                            .transition(.scale.combined(with: .opacity))
-                        }
-
-                        // Main FAB
-                        Button(action: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                showAddMenu.toggle()
-                            }
-                        }) {
-                            Image(systemName: showAddMenu ? "xmark" : "plus")
-                                .font(.system(size: 24, weight: .medium))
-                                .foregroundColor(.white)
-                                .frame(width: 60, height: 60)
-                                .background(
-                                    LinearGradient(
-                                        colors: [Color(hex: "#7B6FDB"), Color(hex: "#6B5FDB")],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .clipShape(Circle())
-                                .shadow(color: Color(hex: "#6B5FDB").opacity(0.4), radius: 12, x: 0, y: 6)
-                        }
-                        .padding(.trailing, 24)
-                        .padding(.bottom, 24)
-                    }
-                }
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showingCapture) {
@@ -244,9 +142,6 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingAddRoom) {
                 AddRoomView()
-            }
-            .fullScreenCover(isPresented: $showingMindMap) {
-                MindMapView()
             }
         }
     }
