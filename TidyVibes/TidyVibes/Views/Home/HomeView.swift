@@ -11,6 +11,8 @@ struct HomeView: View {
     @State private var showingSearch = false
     @State private var showingAddHouse = false
     @State private var showingAddRoom = false
+    @State private var showingMindMap = false
+    @State private var showAddMenu = false
 
     /// Storage spaces not assigned to any location
     var unsortedSpaces: [StorageSpace] {
@@ -24,66 +26,199 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if houses.isEmpty && rooms.isEmpty && allSpaces.isEmpty {
-                    EmptyStateView(showingCapture: $showingCapture)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            // Search bar
-                            Button(action: { showingSearch = true }) {
+            ZStack {
+                // Background
+                Color(hex: "#F5F3F0")
+                    .ignoresSafeArea()
+
+                Group {
+                    if houses.isEmpty && rooms.isEmpty && allSpaces.isEmpty {
+                        EmptyStateView(showingCapture: $showingCapture)
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 16) {
+                                // Header with greeting
                                 HStack {
-                                    Image(systemName: "magnifyingglass")
-                                        .foregroundColor(.secondary)
-                                    Text("Search for an item...")
-                                        .foregroundColor(.secondary)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("TIDY")
+                                            .font(.system(size: 28, weight: .light, design: .rounded))
+                                            .foregroundColor(Color(hex: "#2D2D2D"))
+                                            .tracking(4)
+                                        Text("VIBE")
+                                            .font(.system(size: 28, weight: .light, design: .rounded))
+                                            .foregroundColor(Color(hex: "#2D2D2D"))
+                                            .tracking(4)
+                                    }
+
                                     Spacer()
+
+                                    // Mind map button
+                                    Button(action: { showingMindMap = true }) {
+                                        Image(systemName: "map")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(Color(hex: "#6B5FDB"))
+                                            .frame(width: 44, height: 44)
+                                            .background(Color.white)
+                                            .clipShape(Circle())
+                                            .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+                                    }
                                 }
-                                .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(10)
+                                .padding(.horizontal, 24)
+                                .padding(.top, 16)
+
+                                // Search bar
+                                Button(action: { showingSearch = true }) {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "magnifyingglass")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(Color(hex: "#9E9E9E"))
+                                        Text("Search for an item...")
+                                            .font(.system(size: 15))
+                                            .foregroundColor(Color(hex: "#9E9E9E"))
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 14)
+                                    .background(Color.white)
+                                    .cornerRadius(16)
+                                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                                }
+                                .padding(.horizontal, 24)
+
+                                // House sections (top level)
+                                ForEach(houses) { house in
+                                    HouseSectionView(house: house)
+                                }
+
+                                // Unassigned rooms (rooms without a house)
+                                if !unassignedRooms.isEmpty {
+                                    UnassignedRoomsSectionView(rooms: unassignedRooms)
+                                }
+
+                                // Unsorted section for unassigned storage
+                                if !unsortedSpaces.isEmpty {
+                                    UnsortedSectionView(spaces: unsortedSpaces)
+                                }
+
+                                Spacer(minLength: 100)
                             }
-                            .padding(.horizontal)
+                            .padding(.vertical, 8)
+                        }
+                    }
+                }
+
+                // Floating Action Button (FAB)
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+
+                        // Add menu overlay
+                        if showAddMenu {
+                            VStack(spacing: 12) {
+                                // Add House
+                                Button(action: {
+                                    showAddMenu = false
+                                    showingAddHouse = true
+                                }) {
+                                    HStack {
+                                        Text("Add House")
+                                            .font(.system(size: 15, weight: .medium))
+                                            .foregroundColor(Color(hex: "#2D2D2D"))
+                                        Spacer()
+                                        Image(systemName: "house.fill")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(Color(hex: "#6B5FDB"))
+                                            .frame(width: 40, height: 40)
+                                            .background(Color(hex: "#6B5FDB").opacity(0.1))
+                                            .clipShape(Circle())
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12)
+                                    .background(Color.white)
+                                    .cornerRadius(12)
+                                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                }
+
+                                // Add Room
+                                Button(action: {
+                                    showAddMenu = false
+                                    showingAddRoom = true
+                                }) {
+                                    HStack {
+                                        Text("Add Room")
+                                            .font(.system(size: 15, weight: .medium))
+                                            .foregroundColor(Color(hex: "#2D2D2D"))
+                                        Spacer()
+                                        Image(systemName: "door.left.hand.open")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(Color(hex: "#6B5FDB"))
+                                            .frame(width: 40, height: 40)
+                                            .background(Color(hex: "#6B5FDB").opacity(0.1))
+                                            .clipShape(Circle())
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12)
+                                    .background(Color.white)
+                                    .cornerRadius(12)
+                                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                }
+
+                                // Add Items
+                                Button(action: {
+                                    showAddMenu = false
+                                    showingCapture = true
+                                }) {
+                                    HStack {
+                                        Text("Add Items")
+                                            .font(.system(size: 15, weight: .medium))
+                                            .foregroundColor(Color(hex: "#2D2D2D"))
+                                        Spacer()
+                                        Image(systemName: "photo")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(Color(hex: "#6B5FDB"))
+                                            .frame(width: 40, height: 40)
+                                            .background(Color(hex: "#6B5FDB").opacity(0.1))
+                                            .clipShape(Circle())
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12)
+                                    .background(Color.white)
+                                    .cornerRadius(12)
+                                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                }
+                            }
+                            .padding(.trailing, 24)
                             .padding(.bottom, 12)
-
-                            // House sections (top level)
-                            ForEach(houses) { house in
-                                HouseSectionView(house: house)
-                            }
-
-                            // Unassigned rooms (rooms without a house)
-                            if !unassignedRooms.isEmpty {
-                                UnassignedRoomsSectionView(rooms: unassignedRooms)
-                            }
-
-                            // Unsorted section for unassigned storage
-                            if !unsortedSpaces.isEmpty {
-                                UnsortedSectionView(spaces: unsortedSpaces)
-                            }
+                            .transition(.scale.combined(with: .opacity))
                         }
-                        .padding(.vertical)
+
+                        // Main FAB
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                showAddMenu.toggle()
+                            }
+                        }) {
+                            Image(systemName: showAddMenu ? "xmark" : "plus")
+                                .font(.system(size: 24, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(width: 60, height: 60)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color(hex: "#7B6FDB"), Color(hex: "#6B5FDB")],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .clipShape(Circle())
+                                .shadow(color: Color(hex: "#6B5FDB").opacity(0.4), radius: 12, x: 0, y: 6)
+                        }
+                        .padding(.trailing, 24)
+                        .padding(.bottom, 24)
                     }
                 }
             }
-            .navigationTitle("TidyVibes")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        Button(action: { showingAddHouse = true }) {
-                            Label("Add House/Address", systemImage: "house.fill")
-                        }
-                        Button(action: { showingAddRoom = true }) {
-                            Label("Add Room", systemImage: "door.left.hand.open")
-                        }
-                        Button(action: { showingCapture = true }) {
-                            Label("Add Storage", systemImage: "plus.circle.fill")
-                        }
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                    }
-                }
-            }
+            .navigationBarHidden(true)
             .sheet(isPresented: $showingCapture) {
                 CaptureFlowView()
             }
@@ -98,6 +233,9 @@ struct HomeView: View {
             .sheet(isPresented: $showingAddRoom) {
                 AddRoomView()
             }
+            .fullScreenCover(isPresented: $showingMindMap) {
+                MindMapView()
+            }
         }
     }
 }
@@ -109,52 +247,59 @@ struct UnassignedRoomsSectionView: View {
     @State private var isCollapsed = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
             // Header
             Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     isCollapsed.toggle()
                 }
             }) {
-                HStack(spacing: 10) {
-                    Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .frame(width: 16)
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.orange.opacity(0.12))
+                            .frame(width: 48, height: 48)
 
-                    Image(systemName: "questionmark.folder.fill")
-                        .font(.body)
-                        .foregroundColor(.orange)
+                        Image(systemName: "questionmark.folder.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.orange)
+                    }
 
                     Text("Unassigned Rooms")
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(Color(hex: "#2D2D2D"))
 
                     Spacer()
 
                     if isCollapsed {
-                        Text("\(rooms.count) room\(rooms.count == 1 ? "" : "s")")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        Text("\(rooms.count)")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color(hex: "#2D2D2D"))
                     }
+
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color(hex: "#9E9E9E"))
+                        .rotationEffect(.degrees(isCollapsed ? -90 : 0))
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-                .background(Color(.systemBackground))
+                .padding(16)
+                .background(Color.white)
+                .cornerRadius(16)
+                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
             }
             .buttonStyle(.plain)
 
             // Rooms
             if !isCollapsed {
-                ForEach(rooms) { room in
-                    RoomSectionView(room: room)
-                        .padding(.leading, 24)
+                VStack(spacing: 8) {
+                    ForEach(rooms) { room in
+                        RoomSectionView(room: room)
+                    }
                 }
-            }
-
-            Divider()
                 .padding(.leading, 16)
+            }
         }
+        .padding(.horizontal, 24)
     }
 }
 
@@ -165,55 +310,61 @@ struct UnsortedSectionView: View {
     @State private var isCollapsed = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
             // Header
             Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     isCollapsed.toggle()
                 }
             }) {
-                HStack(spacing: 10) {
-                    Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .frame(width: 16)
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.gray.opacity(0.12))
+                            .frame(width: 48, height: 48)
 
-                    Image(systemName: "tray.fill")
-                        .font(.body)
-                        .foregroundColor(.gray)
+                        Image(systemName: "tray.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.gray)
+                    }
 
                     Text("Unsorted")
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(Color(hex: "#2D2D2D"))
 
                     Spacer()
 
                     if isCollapsed {
-                        Text("\(spaces.count) storage\(spaces.count == 1 ? "" : "s")")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        Text("\(spaces.count)")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color(hex: "#2D2D2D"))
                     }
+
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color(hex: "#9E9E9E"))
+                        .rotationEffect(.degrees(isCollapsed ? -90 : 0))
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-                .background(Color(.systemBackground))
+                .padding(16)
+                .background(Color.white)
+                .cornerRadius(16)
+                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
             }
             .buttonStyle(.plain)
 
             // Storage spaces
             if !isCollapsed {
-                ForEach(spaces) { space in
-                    NavigationLink(destination: StorageDetailView(space: space)) {
-                        StorageCardView(space: space)
-                            .padding(.horizontal)
-                            .padding(.vertical, 4)
+                VStack(spacing: 6) {
+                    ForEach(spaces) { space in
+                        NavigationLink(destination: StorageDetailView(space: space)) {
+                            StorageCardView(space: space)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal, 16)
             }
-
-            Divider()
-                .padding(.leading, 16)
         }
+        .padding(.horizontal, 24)
     }
 }

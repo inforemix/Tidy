@@ -8,83 +8,88 @@ struct RoomSectionView: View {
     @State private var showingDeleteConfirmation = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Room header — tap to collapse/expand
+        VStack(spacing: 8) {
+            // Room card
             Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     room.isCollapsed.toggle()
                 }
             }) {
-                HStack(spacing: 10) {
-                    Image(systemName: room.isCollapsed ? "chevron.right" : "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .frame(width: 16)
+                HStack(spacing: 12) {
+                    // Icon
+                    ZStack {
+                        Circle()
+                            .fill(room.colorValue.opacity(0.12))
+                            .frame(width: 40, height: 40)
 
-                    if let icon = room.icon {
-                        Image(systemName: icon)
-                            .font(.body)
-                            .foregroundColor(room.colorValue)
+                        if let icon = room.icon {
+                            Image(systemName: icon)
+                                .font(.system(size: 16))
+                                .foregroundColor(room.colorValue)
+                        }
                     }
 
+                    // Text
                     Text(room.name)
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(Color(hex: "#2D2D2D"))
 
                     Spacer()
 
+                    // Item count
                     if room.isCollapsed {
-                        Text(room.summary)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        Text("\(room.totalItemCount) items")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(hex: "#9E9E9E"))
                     }
 
-                    Menu {
-                        Button(action: { showingAddLocation = true }) {
-                            Label("Add Location", systemImage: "plus")
-                        }
-                        Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
-                            Label("Delete Room", systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(6)
-                    }
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(Color(hex: "#9E9E9E"))
+                        .rotationEffect(.degrees(room.isCollapsed ? -90 : 0))
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 14)
                 .padding(.vertical, 12)
-                .background(Color(.systemBackground))
+                .background(Color.white.opacity(0.6))
+                .cornerRadius(12)
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                Button(action: { showingAddLocation = true }) {
+                    Label("Add Location", systemImage: "plus")
+                }
+                Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
+                    Label("Delete Room", systemImage: "trash")
+                }
+            }
 
             // Expanded content — locations
             if !room.isCollapsed {
-                let sortedLocations = room.locations.sorted { $0.sortOrder < $1.sortOrder }
-                ForEach(sortedLocations) { location in
-                    LocationSectionView(location: location)
-                        .padding(.leading, 24)
-                }
+                VStack(spacing: 6) {
+                    let sortedLocations = room.locations.sorted { $0.sortOrder < $1.sortOrder }
+                    ForEach(sortedLocations) { location in
+                        LocationSectionView(location: location)
+                    }
 
-                if room.locations.isEmpty {
-                    HStack {
-                        Image(systemName: "plus.circle.dashed")
-                            .foregroundColor(.secondary)
-                        Text("Add a location")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.leading, 40)
-                    .padding(.vertical, 8)
-                    .onTapGesture {
-                        showingAddLocation = true
+                    if room.locations.isEmpty {
+                        Button(action: { showingAddLocation = true }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#6B5FDB"))
+                                Text("Add a location")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(Color(hex: "#6B5FDB"))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color(hex: "#6B5FDB").opacity(0.06))
+                            .cornerRadius(10)
+                        }
                     }
                 }
+                .padding(.leading, 12)
             }
-
-            Divider()
-                .padding(.leading, 16)
         }
         .sheet(isPresented: $showingAddLocation) {
             AddLocationView(room: room)

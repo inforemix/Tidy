@@ -8,107 +8,106 @@ struct HouseSectionView: View {
     @State private var showingDeleteConfirmation = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // House header — tap to collapse/expand
+        VStack(spacing: 12) {
+            // House card header
             Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     house.isCollapsed.toggle()
                 }
             }) {
-                HStack(spacing: 10) {
-                    Image(systemName: house.isCollapsed ? "chevron.right" : "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .frame(width: 16)
+                VStack(spacing: 0) {
+                    HStack(spacing: 14) {
+                        // Icon
+                        ZStack {
+                            Circle()
+                                .fill(house.colorValue.opacity(0.12))
+                                .frame(width: 48, height: 48)
 
-                    if let icon = house.icon {
-                        Image(systemName: icon)
-                            .font(.title3)
-                            .foregroundColor(house.colorValue)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(house.name)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-
-                        if let address = house.address, !address.isEmpty, house.isCollapsed {
-                            Text(address)
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
+                            if let icon = house.icon {
+                                Image(systemName: icon)
+                                    .font(.system(size: 20))
+                                    .foregroundColor(house.colorValue)
+                            }
                         }
-                    }
 
-                    Spacer()
+                        // Text
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(house.name)
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(Color(hex: "#2D2D2D"))
 
-                    if house.isCollapsed {
-                        Text(house.summary)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-
-                    Menu {
-                        Button(action: { showingAddRoom = true }) {
-                            Label("Add Room", systemImage: "plus")
+                            if let address = house.address, !address.isEmpty {
+                                Text(address)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Color(hex: "#9E9E9E"))
+                                    .lineLimit(1)
+                            }
                         }
-                        Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
-                            Label("Delete House", systemImage: "trash")
+
+                        Spacer()
+
+                        // Stats or chevron
+                        if house.isCollapsed {
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("\(house.roomCount)")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(Color(hex: "#2D2D2D"))
+                                Text("rooms")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(Color(hex: "#9E9E9E"))
+                            }
                         }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .padding(6)
+
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Color(hex: "#9E9E9E"))
+                            .rotationEffect(.degrees(house.isCollapsed ? -90 : 0))
                     }
+                    .padding(16)
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-                .background(Color(.systemBackground))
+                .background(Color.white)
+                .cornerRadius(16)
+                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
             }
             .buttonStyle(.plain)
-
-            // Expanded content — address and rooms
-            if !house.isCollapsed {
-                if let address = house.address, !address.isEmpty {
-                    HStack {
-                        Image(systemName: "mappin.and.ellipse")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text(address)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 40)
-                    .padding(.vertical, 4)
+            .contextMenu {
+                Button(action: { showingAddRoom = true }) {
+                    Label("Add Room", systemImage: "plus")
                 }
-
-                let sortedRooms = house.rooms.sorted { $0.sortOrder < $1.sortOrder }
-                ForEach(sortedRooms) { room in
-                    RoomSectionView(room: room)
-                        .padding(.leading, 24)
-                }
-
-                if house.rooms.isEmpty {
-                    HStack {
-                        Image(systemName: "plus.circle.dashed")
-                            .foregroundColor(.secondary)
-                        Text("Add a room")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.leading, 40)
-                    .padding(.vertical, 8)
-                    .onTapGesture {
-                        showingAddRoom = true
-                    }
+                Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
+                    Label("Delete House", systemImage: "trash")
                 }
             }
 
-            Divider()
+            // Expanded content — rooms
+            if !house.isCollapsed {
+                VStack(spacing: 8) {
+                    let sortedRooms = house.rooms.sorted { $0.sortOrder < $1.sortOrder }
+                    ForEach(sortedRooms) { room in
+                        RoomSectionView(room: room)
+                    }
+
+                    if house.rooms.isEmpty {
+                        Button(action: { showingAddRoom = true }) {
+                            HStack(spacing: 10) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(Color(hex: "#6B5FDB"))
+                                Text("Add your first room")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(Color(hex: "#6B5FDB"))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color(hex: "#6B5FDB").opacity(0.08))
+                            .cornerRadius(12)
+                        }
+                    }
+                }
                 .padding(.leading, 16)
+            }
         }
+        .padding(.horizontal, 24)
         .sheet(isPresented: $showingAddRoom) {
             AddRoomView(house: house)
         }

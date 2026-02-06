@@ -7,69 +7,66 @@ struct LocationSectionView: View {
     @State private var showingDeleteConfirmation = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Location header
+        VStack(spacing: 6) {
+            // Location card
             Button(action: {
-                withAnimation(.easeInOut(duration: 0.25)) {
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                     isExpanded.toggle()
                 }
             }) {
-                HStack(spacing: 8) {
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .frame(width: 14)
-
+                HStack(spacing: 10) {
+                    // Icon
                     Image(systemName: "mappin.circle.fill")
-                        .font(.caption)
-                        .foregroundColor(.orange)
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "#FF9500"))
 
+                    // Text
                     Text(location.name)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(hex: "#2D2D2D"))
 
                     Spacer()
 
-                    Text("\(location.totalItemCount) items")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                    // Item count
+                    Text("\(location.totalItemCount)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "#9E9E9E"))
 
-                    Menu {
-                        Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
-                            Label("Delete Location", systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .padding(4)
-                    }
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(Color(hex: "#9E9E9E"))
+                        .rotationEffect(.degrees(isExpanded ? 0 : -90))
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color.white.opacity(0.4))
+                .cornerRadius(10)
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
+                    Label("Delete Location", systemImage: "trash")
+                }
+            }
 
             // Storage spaces within this location
             if isExpanded {
-                ForEach(location.storageSpaces) { space in
-                    NavigationLink(destination: StorageDetailView(space: space)) {
-                        StorageCardView(space: space)
-                            .padding(.leading, 24)
-                            .padding(.trailing)
-                            .padding(.vertical, 4)
+                VStack(spacing: 4) {
+                    ForEach(location.storageSpaces) { space in
+                        NavigationLink(destination: StorageDetailView(space: space)) {
+                            StorageCardView(space: space)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
-                }
 
-                if location.storageSpaces.isEmpty {
-                    Text("No storage spaces yet")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.leading, 48)
-                        .padding(.vertical, 4)
+                    if location.storageSpaces.isEmpty {
+                        Text("No storage yet")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(hex: "#9E9E9E"))
+                            .padding(.vertical, 8)
+                    }
                 }
+                .padding(.leading, 8)
             }
         }
         .alert("Delete Location?", isPresented: $showingDeleteConfirmation) {
