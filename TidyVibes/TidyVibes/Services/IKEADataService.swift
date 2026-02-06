@@ -36,7 +36,8 @@ class IKEADataService {
 
     var popularProducts: [IKEAProduct] {
         // Return most common products first
-        let popularIds = ["alex_drawer_unit", "kallax_insert_2drawer", "malm_6drawer",
+        let popularIds = ["alex_drawer_unit", "kallax_shelf_2x4", "kallax_insert_2drawer",
+                         "billy_bookcase_31", "pax_wardrobe_29", "malm_6drawer",
                          "skubb_box_set", "kuggis_box_lid", "hemnes_8drawer"]
         return popularIds.compactMap { getProduct(id: $0) }
     }

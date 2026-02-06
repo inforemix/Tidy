@@ -1,11 +1,13 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct RoomSectionView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var room: Room
     @State private var showingAddLocation = false
     @State private var showingDeleteConfirmation = false
+    @State private var draggingLocation: Location?
 
     var body: some View {
         VStack(spacing: 8) {
@@ -69,6 +71,16 @@ struct RoomSectionView: View {
                     let sortedLocations = room.locations.sorted { $0.sortOrder < $1.sortOrder }
                     ForEach(sortedLocations) { location in
                         LocationSectionView(location: location)
+                            .onDrag {
+                                draggingLocation = location
+                                return NSItemProvider(object: location.id.uuidString as NSString)
+                            }
+                            .onDrop(of: [.text], delegate: LocationDropDelegate(
+                                item: location,
+                                draggingItem: $draggingLocation,
+                                locations: sortedLocations,
+                                modelContext: modelContext
+                            ))
                     }
 
                     if room.locations.isEmpty {
@@ -107,5 +119,40 @@ struct RoomSectionView: View {
     private func deleteRoom() {
         modelContext.delete(room)
         try? modelContext.save()
+    }
+}
+
+// MARK: - Location Drop Delegate
+
+struct LocationDropDelegate: DropDelegate {
+    let item: Location
+    @Binding var draggingItem: Location?
+    let locations: [Location]
+    let modelContext: ModelContext
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggingItem = nil
+        return true
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard let dragging = draggingItem, dragging.id != item.id else { return }
+        guard let fromIndex = locations.firstIndex(where: { $0.id == dragging.id }),
+              let toIndex = locations.firstIndex(where: { $0.id == item.id }) else { return }
+        if fromIndex != toIndex {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                var reordered = locations
+                let moved = reordered.remove(at: fromIndex)
+                reordered.insert(moved, at: toIndex)
+                for (i, location) in reordered.enumerated() {
+                    location.sortOrder = i
+                }
+                try? modelContext.save()
+            }
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
     }
 }
