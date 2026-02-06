@@ -23,6 +23,211 @@
     ]
   },
   {
+    "id": "kallax_shelf_1x4",
+    "name": "KALLAX Shelf Unit 1x4",
+    "productId": "802.758.87",
+    "type": "shelf_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 2, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 3, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 4, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 }
+    ]
+  },
+  {
+    "id": "kallax_shelf_2x2",
+    "name": "KALLAX Shelf Unit 2x2",
+    "productId": "202.758.14",
+    "type": "shelf_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 2, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 3, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 4, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 }
+    ]
+  },
+  {
+    "id": "kallax_shelf_2x4",
+    "name": "KALLAX Shelf Unit 2x4",
+    "productId": "802.758.95",
+    "type": "shelf_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 2, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 3, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 4, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 5, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 6, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 7, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 8, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 }
+    ]
+  },
+  {
+    "id": "kallax_shelf_4x4",
+    "name": "KALLAX Shelf Unit 4x4",
+    "productId": "703.015.37",
+    "type": "shelf_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 2, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 3, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 4, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 5, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 6, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 7, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 8, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 9, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 10, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 11, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 12, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 13, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 14, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 15, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 },
+      { "position": 16, "widthInches": 13, "depthInches": 15.375, "heightInches": 13 }
+    ]
+  },
+  {
+    "id": "kallax_insert_door",
+    "name": "KALLAX Insert with Door",
+    "productId": "402.781.66",
+    "type": "shelf_insert",
+    "dimensions": { "widthInches": 13, "depthInches": 15.375, "heightInches": 13 }
+  },
+  {
+    "id": "kallax_insert_shelf",
+    "name": "KALLAX Shelf Insert",
+    "productId": "103.290.17",
+    "type": "shelf_insert",
+    "dimensions": { "widthInches": 13, "depthInches": 15.375, "heightInches": 13 }
+  },
+  {
+    "id": "billy_bookcase_31",
+    "name": "BILLY Bookcase 31.5\"",
+    "productId": "002.638.50",
+    "type": "shelf_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 },
+      { "position": 2, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 },
+      { "position": 3, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 },
+      { "position": 4, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 },
+      { "position": 5, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 }
+    ]
+  },
+  {
+    "id": "billy_bookcase_15",
+    "name": "BILLY Bookcase 15.75\"",
+    "productId": "404.019.07",
+    "type": "shelf_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 14, "depthInches": 11, "heightInches": 13 },
+      { "position": 2, "widthInches": 14, "depthInches": 11, "heightInches": 13 },
+      { "position": 3, "widthInches": 14, "depthInches": 11, "heightInches": 13 },
+      { "position": 4, "widthInches": 14, "depthInches": 11, "heightInches": 13 },
+      { "position": 5, "widthInches": 14, "depthInches": 11, "heightInches": 13 }
+    ]
+  },
+  {
+    "id": "billy_oxberg_31",
+    "name": "BILLY/OXBERG Bookcase with Doors 31.5\"",
+    "productId": "692.817.73",
+    "type": "shelf_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 },
+      { "position": 2, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 },
+      { "position": 3, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 },
+      { "position": 4, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 },
+      { "position": 5, "widthInches": 29.5, "depthInches": 11, "heightInches": 13 }
+    ]
+  },
+  {
+    "id": "pax_wardrobe_19",
+    "name": "PAX Wardrobe Frame 19.625\"",
+    "productId": "902.145.01",
+    "type": "wardrobe",
+    "drawers": [
+      { "position": 1, "widthInches": 17.375, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 2, "widthInches": 17.375, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 3, "widthInches": 17.375, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 4, "widthInches": 17.375, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 5, "widthInches": 17.375, "depthInches": 22.875, "heightInches": 14 }
+    ]
+  },
+  {
+    "id": "pax_wardrobe_29",
+    "name": "PAX Wardrobe Frame 29.5\"",
+    "productId": "002.145.02",
+    "type": "wardrobe",
+    "drawers": [
+      { "position": 1, "widthInches": 27.5, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 2, "widthInches": 27.5, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 3, "widthInches": 27.5, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 4, "widthInches": 27.5, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 5, "widthInches": 27.5, "depthInches": 22.875, "heightInches": 14 }
+    ]
+  },
+  {
+    "id": "pax_wardrobe_39",
+    "name": "PAX Wardrobe Frame 39.375\"",
+    "productId": "302.145.03",
+    "type": "wardrobe",
+    "drawers": [
+      { "position": 1, "widthInches": 37.375, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 2, "widthInches": 37.375, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 3, "widthInches": 37.375, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 4, "widthInches": 37.375, "depthInches": 22.875, "heightInches": 14 },
+      { "position": 5, "widthInches": 37.375, "depthInches": 22.875, "heightInches": 14 }
+    ]
+  },
+  {
+    "id": "pax_komplement_drawer_29",
+    "name": "PAX KOMPLEMENT Drawer 29.5\"",
+    "productId": "702.463.03",
+    "type": "drawer_insert",
+    "drawers": [
+      { "position": 1, "widthInches": 27.5, "depthInches": 22.875, "heightInches": 6.25 }
+    ]
+  },
+  {
+    "id": "pax_komplement_shelf_29",
+    "name": "PAX KOMPLEMENT Shelf 29.5\"",
+    "productId": "302.779.84",
+    "type": "shelf_insert",
+    "dimensions": { "widthInches": 29.5, "depthInches": 22.875, "heightInches": 0.75 }
+  },
+  {
+    "id": "malm_2drawer",
+    "name": "MALM 2-Drawer Chest",
+    "productId": "802.145.49",
+    "type": "drawer_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 15.375, "depthInches": 16.5, "heightInches": 7.5 },
+      { "position": 2, "widthInches": 15.375, "depthInches": 16.5, "heightInches": 7.5 }
+    ]
+  },
+  {
+    "id": "malm_3drawer",
+    "name": "MALM 3-Drawer Chest",
+    "productId": "304.255.48",
+    "type": "drawer_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 },
+      { "position": 2, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 },
+      { "position": 3, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 }
+    ]
+  },
+  {
+    "id": "malm_4drawer",
+    "name": "MALM 4-Drawer Chest",
+    "productId": "802.145.53",
+    "type": "drawer_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 5.5 },
+      { "position": 2, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 5.5 },
+      { "position": 3, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 5.5 },
+      { "position": 4, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 5.5 }
+    ]
+  },
+  {
     "id": "malm_6drawer",
     "name": "MALM 6-Drawer Dresser",
     "productId": "102.145.57",
@@ -34,6 +239,30 @@
       { "position": 4, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 },
       { "position": 5, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 },
       { "position": 6, "widthInches": 28.75, "depthInches": 16.5, "heightInches": 6 }
+    ]
+  },
+  {
+    "id": "ivar_shelf_unit",
+    "name": "IVAR Shelf Unit 35\"",
+    "productId": "492.483.38",
+    "type": "shelf_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 32.625, "depthInches": 11.75, "heightInches": 14 },
+      { "position": 2, "widthInches": 32.625, "depthInches": 11.75, "heightInches": 14 },
+      { "position": 3, "widthInches": 32.625, "depthInches": 11.75, "heightInches": 14 },
+      { "position": 4, "widthInches": 32.625, "depthInches": 11.75, "heightInches": 14 }
+    ]
+  },
+  {
+    "id": "besta_shelf_unit",
+    "name": "BESTA Storage Combination 47.25\"",
+    "productId": "390.466.44",
+    "type": "shelf_unit",
+    "drawers": [
+      { "position": 1, "widthInches": 23.625, "depthInches": 15.75, "heightInches": 15 },
+      { "position": 2, "widthInches": 23.625, "depthInches": 15.75, "heightInches": 15 },
+      { "position": 3, "widthInches": 23.625, "depthInches": 15.75, "heightInches": 15 },
+      { "position": 4, "widthInches": 23.625, "depthInches": 15.75, "heightInches": 15 }
     ]
   },
   {
@@ -56,6 +285,20 @@
     "productId": "603.954.28",
     "type": "box",
     "dimensions": { "widthInches": 9.75, "depthInches": 13.75, "heightInches": 7.75 }
+  },
+  {
+    "id": "variera_box",
+    "name": "VARIERA Box",
+    "productId": "601.772.55",
+    "type": "box",
+    "dimensions": { "widthInches": 9.5, "depthInches": 6.75, "heightInches": 4.5 }
+  },
+  {
+    "id": "upprymd_box_set",
+    "name": "UPPRYMD Box (Set of 3)",
+    "productId": "604.855.49",
+    "type": "box",
+    "dimensions": { "widthInches": 7, "depthInches": 10.25, "heightInches": 3.25 }
   },
   {
     "id": "hemnes_8drawer",
